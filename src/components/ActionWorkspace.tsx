@@ -57,7 +57,7 @@ export function ActionWorkspace({
 
   return (
     <section aria-label={copy.heading} className="space-y-5">
-      <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-5 space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
           <div className="space-y-1.5 max-w-2xl">
             <h2 className="font-display text-lg font-semibold text-slate-900">{copy.heading}</h2>
@@ -79,7 +79,7 @@ export function ActionWorkspace({
                 value={searchQuery}
                 onChange={(e) => onSearchQueryChange(e.target.value)}
                 placeholder="Filter by keyword..."
-                className="w-full sm:w-52 rounded-lg border border-slate-300 bg-white pl-9 pr-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-teal-700 focus:outline-none"
+                className="w-full sm:w-52 rounded-lg border border-slate-300 bg-white pl-9 pr-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 transition-colors focus:border-teal-700 focus:outline-none"
               />
             </div>
 
@@ -97,7 +97,7 @@ export function ActionWorkspace({
                     type="button"
                     onClick={() => onStatusFilterChange(tab)}
                     aria-pressed={active}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-teal-700 ${
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md active:scale-[0.97] transition-all duration-150 whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-teal-700 ${
                       active
                         ? 'bg-white text-slate-900 shadow-xs'
                         : 'text-slate-600 hover:text-slate-900'
@@ -127,7 +127,7 @@ export function ActionWorkspace({
           {[1, 2, 3].map((n) => (
             <div
               key={n}
-              className="bg-white border border-slate-200 rounded-xl p-5 space-y-3 animate-pulse"
+              className="bg-white border border-slate-200/90 rounded-2xl p-5 space-y-3 animate-pulse"
             >
               <div className="h-4 w-1/3 bg-slate-200 rounded" />
               <div className="h-5 w-2/3 bg-slate-200 rounded" />
@@ -136,7 +136,7 @@ export function ActionWorkspace({
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white border border-slate-200 rounded-xl p-8 text-center space-y-3">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-8 text-center space-y-3">
           <p className="text-sm font-medium text-slate-900">
             No {copy.verb.toLowerCase()} items match your current filter.
           </p>
@@ -149,7 +149,7 @@ export function ActionWorkspace({
               onStatusFilterChange('all');
               onSearchQueryChange('');
             }}
-            className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-800 hover:bg-slate-50 transition-colors focus-visible:outline-2 focus-visible:outline-teal-700"
+            className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-800 hover:bg-slate-50 active:scale-[0.98] transition-all duration-150 focus-visible:outline-2 focus-visible:outline-teal-700"
           >
             Reset Filters
           </button>
@@ -162,8 +162,10 @@ export function ActionWorkspace({
               <article
                 key={action.id}
                 data-testid={`action-card-${action.id}`}
-                className={`bg-white border rounded-xl p-5 transition-colors ${
-                  isAdopted ? 'border-teal-600' : 'border-slate-200'
+                className={`border rounded-2xl p-5 transition-all duration-150 ${
+                  isAdopted
+                    ? 'border-teal-600 bg-teal-50/25'
+                    : 'border-slate-200/90 bg-white hover:border-slate-300'
                 }`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -191,14 +193,16 @@ export function ActionWorkspace({
                     aria-label={
                       isAdopted ? `Remove '${action.title}' from plan` : `Adopt '${action.title}'`
                     }
-                    className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition-colors whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-teal-700 ${
+                    className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-medium active:scale-[0.98] transition-all duration-150 whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-teal-700 ${
                       isAdopted
                         ? 'bg-teal-700 text-white hover:bg-teal-800'
-                        : 'border border-slate-300 bg-white text-slate-800 hover:bg-slate-50'
+                        : 'border border-slate-300 bg-white text-slate-800 hover:bg-slate-50 hover:border-slate-400'
                     }`}
                   >
                     <Check
-                      className={`h-3.5 w-3.5 ${isAdopted ? 'text-white' : 'text-slate-400'}`}
+                      className={`h-3.5 w-3.5 transition-transform duration-150 ${
+                        isAdopted ? 'text-white scale-110' : 'text-slate-400'
+                      }`}
                       aria-hidden="true"
                     />
                     <span>{isAdopted ? 'Adopted' : `Adopt ${copy.verb}`}</span>

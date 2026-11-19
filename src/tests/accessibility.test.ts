@@ -89,6 +89,28 @@ describe('Automated accessibility audits (axe-core)', () => {
       }),
     );
     await runAxeAudit(sidebarContainer);
+
+    const { container: collapsedSidebarContainer } = render(
+      createElement(Sidebar, {
+        activeTab: 'routine',
+        onSelectTab: vi.fn(),
+        presets: REGIONAL_PRESETS,
+        activePresetId: preset.id,
+        onSelectPreset: vi.fn(),
+        profile: preset.profile,
+        savedBaseline: baseline,
+        onSaveBaseline: vi.fn(),
+        onCheckLiveAqi: vi.fn(),
+        isCheckingLive: false,
+        onOpenCustomizer: vi.fn(),
+        counts: { routine: 4, indoor: 3, community: 3 },
+        collapsed: true,
+        onToggleCollapsed: vi.fn(),
+        mobileOpen: false,
+        onCloseMobile: vi.fn(),
+      }),
+    );
+    await runAxeAudit(collapsedSidebarContainer);
   });
 
   it('ImpactStrip (with Recharts projection) and DiurnalSmogChart pass axe-core audit', async () => {

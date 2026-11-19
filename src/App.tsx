@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import { MotionConfig, motion } from 'motion/react';
 import { AlertCircle, ShieldAlert } from 'lucide-react';
 import { REGIONAL_PRESETS } from './data/presets';
 import { calculateImpactSummary, classifyAqiBand } from './utils/airImpact';
 import { evaluateAqiWorsening } from './utils/aqiAlertRules';
+import { useSidebarState } from './hooks/useSidebarState';
 import {
   fetchLiveAqiReading,
   getSavedLocationBaseline,
@@ -49,8 +51,14 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
 
+  const {
+    collapsed: sidebarCollapsed,
+    mobileOpen: mobileMenuOpen,
+    toggleCollapsed: toggleDesktopSidebar,
+    openMobile: openMobileMenu,
+    closeMobile: closeMobileMenu,
+  } = useSidebarState();
   const [customizerOpen, setCustomizerOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
   const [planError, setPlanError] = useState<string | null>(null);
 
@@ -224,115 +232,133 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex bg-slate-50 text-slate-900">
-      <Sidebar
-        activeTab={activeTab}
-        onSelectTab={setActiveTab}
-        presets={REGIONAL_PRESETS}
-        activePresetId={activePresetId}
-        onSelectPreset={handleSelectPreset}
-        profile={profile}
-        savedBaseline={savedBaseline}
-        onSaveBaseline={handleSaveBaseline}
-        onCheckLiveAqi={() => void handleCheckLiveAqi()}
-        isCheckingLive={isCheckingLive}
-        onOpenCustomizer={() => {
-          setPlanError(null);
-          setCustomizerOpen(true);
-        }}
-        counts={counts}
-        mobileOpen={mobileMenuOpen}
-        onCloseMobile={() => setMobileMenuOpen(false)}
-      />
-
-      <div className="flex-1 flex flex-col min-w-0">
-        <TopBar
+    <MotionConfig reducedMotion="user">
+      <div className="min-h-screen flex bg-[#f4f6f9] text-slate-900">
+        <Sidebar
           activeTab={activeTab}
+          onSelectTab={setActiveTab}
+          presets={REGIONAL_PRESETS}
+          activePresetId={activePresetId}
+          onSelectPreset={handleSelectPreset}
           profile={profile}
+          savedBaseline={savedBaseline}
+          onSaveBaseline={handleSaveBaseline}
+          onCheckLiveAqi={() => void handleCheckLiveAqi()}
+          isCheckingLive={isCheckingLive}
           onOpenCustomizer={() => {
             setPlanError(null);
             setCustomizerOpen(true);
           }}
-          onOpenMobileMenu={() => setMobileMenuOpen(true)}
-          isGenerating={isGeneratingPlan}
+          counts={counts}
+          collapsed={sidebarCollapsed}
+          onToggleCollapsed={toggleDesktopSidebar}
+          mobileOpen={mobileMenuOpen}
+          onCloseMobile={closeMobileMenu}
         />
 
-        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6">
-          <div className="max-w-6xl mx-auto space-y-6">
-            <div
-              className={`flex items-start gap-3 rounded-xl border p-4 text-xs sm:text-sm ${aqiBand.surfaceClass} ${aqiBand.borderColorClass}`}
-            >
-              <ShieldAlert
-                className={`h-4 w-4 shrink-0 mt-0.5 ${aqiBand.textColorClass}`}
-                aria-hidden="true"
-              />
-              <div className="space-y-0.5">
-                <div className="font-medium text-slate-900">
-                  {profile.city} · AQI {profile.aqi} ({aqiBand.severity})
-                </div>
-                <p className="text-slate-700 leading-relaxed">{aqiBand.advisory}</p>
-              </div>
-            </div>
+        <div
+          className={`flex-1 flex flex-col min-w-0 transition-[padding] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            sidebarCollapsed ? 'lg:pl-[76px]' : 'lg:pl-[272px]'
+          }`}
+        >
+          <TopBar
+            activeTab={activeTab}
+            profile={profile}
+            onOpenCustomizer={() => {
+              setPlanError(null);
+              setCustomizerOpen(true);
+            }}
+            onOpenMobileMenu={openMobileMenu}
+            sidebarCollapsed={sidebarCollapsed}
+            onToggleDesktopSidebar={toggleDesktopSidebar}
+            isGenerating={isGeneratingPlan}
+          />
 
-            {planError && !customizerOpen && (
+          <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6">
+            <div className="max-w-6xl mx-auto space-y-6">
               <div
-                role="alert"
-                className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-4 text-xs text-red-900"
+                className={`flex items-start gap-3 rounded-2xl border p-4 text-xs sm:text-sm transition-colors duration-150 ${aqiBand.surfaceClass} ${aqiBand.borderColorClass}`}
               >
-                <AlertCircle className="h-4 w-4 text-red-700 shrink-0 mt-0.5" aria-hidden="true" />
-                <span>{planError}</span>
+                <ShieldAlert
+                  className={`h-4 w-4 shrink-0 mt-0.5 ${aqiBand.textColorClass}`}
+                  aria-hidden="true"
+                />
+                <div className="space-y-0.5">
+                  <div className="font-medium text-slate-900">
+                    {profile.city} · AQI {profile.aqi} ({aqiBand.severity})
+                  </div>
+                  <p className="text-slate-700 leading-relaxed">{aqiBand.advisory}</p>
+                </div>
               </div>
-            )}
 
-            <ImpactStrip profile={profile} impact={impact} />
+              {planError && !customizerOpen && (
+                <div
+                  role="alert"
+                  className="flex items-start gap-2.5 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs text-red-900"
+                >
+                  <AlertCircle className="h-4 w-4 text-red-700 shrink-0 mt-0.5" aria-hidden="true" />
+                  <span>{planError}</span>
+                </div>
+              )}
 
-            {activeTab === 'routine' && (
-              <DiurnalSmogChart
-                aqi={profile.aqi}
-                bestVentilationWindow={bestVentilationWindow}
-              />
-            )}
+              <ImpactStrip profile={profile} impact={impact} />
 
-            {activeTab === 'assistant' ? (
-              <AskAssistantView
-                profile={profile}
-                adoptedTitles={adoptedTitles}
-                messages={messages}
-                onAppendMessages={handleAppendMessages}
-              />
-            ) : (
-              <ActionWorkspace
-                category={activeTab}
-                actions={actions}
-                adoptedIds={adoptedIds}
-                onToggleAdopt={handleToggleAdopt}
-                statusFilter={statusFilter}
-                onStatusFilterChange={setStatusFilter}
-                searchQuery={searchQuery}
-                onSearchQueryChange={setSearchQuery}
-                isLoading={isGeneratingPlan}
-                impactNarrative={impactNarrative}
-              />
-            )}
-          </div>
-        </main>
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                className="space-y-6"
+              >
+                {activeTab === 'routine' && (
+                  <DiurnalSmogChart
+                    aqi={profile.aqi}
+                    bestVentilationWindow={bestVentilationWindow}
+                  />
+                )}
+
+                {activeTab === 'assistant' ? (
+                  <AskAssistantView
+                    profile={profile}
+                    adoptedTitles={adoptedTitles}
+                    messages={messages}
+                    onAppendMessages={handleAppendMessages}
+                  />
+                ) : (
+                  <ActionWorkspace
+                    category={activeTab}
+                    actions={actions}
+                    adoptedIds={adoptedIds}
+                    onToggleAdopt={handleToggleAdopt}
+                    statusFilter={statusFilter}
+                    onStatusFilterChange={setStatusFilter}
+                    searchQuery={searchQuery}
+                    onSearchQueryChange={setSearchQuery}
+                    isLoading={isGeneratingPlan}
+                    impactNarrative={impactNarrative}
+                  />
+                )}
+              </motion.div>
+            </div>
+          </main>
+        </div>
+
+        <ProfileCustomizerModal
+          open={customizerOpen}
+          initialProfile={profile}
+          isGenerating={isGeneratingPlan}
+          apiError={planError}
+          onClose={() => setCustomizerOpen(false)}
+          onGeneratePlan={handleGenerateCustomPlan}
+          onApplyLocalProfile={handleApplyLocalProfile}
+        />
+
+        <AlertToastStack
+          alerts={alerts}
+          onDismiss={handleDismissAlert}
+          onApplyLiveAqi={handleApplyLiveAqi}
+        />
       </div>
-
-      <ProfileCustomizerModal
-        open={customizerOpen}
-        initialProfile={profile}
-        isGenerating={isGeneratingPlan}
-        apiError={planError}
-        onClose={() => setCustomizerOpen(false)}
-        onGeneratePlan={handleGenerateCustomPlan}
-        onApplyLocalProfile={handleApplyLocalProfile}
-      />
-
-      <AlertToastStack
-        alerts={alerts}
-        onDismiss={handleDismissAlert}
-        onApplyLiveAqi={handleApplyLiveAqi}
-      />
-    </div>
+    </MotionConfig>
   );
 }

@@ -130,4 +130,57 @@ describe('TopBar, Sidebar, and AlertToastStack components', () => {
     await user.click(screen.getByRole('button', { name: /Dismiss AQI alert/i }));
     expect(onDismiss).toHaveBeenCalledWith('alert-365');
   });
+
+  it('Sidebar compact collapsed rail preserves accessible names and triggers toggle callbacks', async () => {
+    const user = userEvent.setup();
+    const onToggleCollapsed = vi.fn();
+    const onToggleDesktopSidebar = vi.fn();
+    const onSelectPreset = vi.fn();
+
+    render(
+      <>
+        <TopBar
+          activeTab="routine"
+          profile={preset.profile}
+          onOpenCustomizer={vi.fn()}
+          onOpenMobileMenu={vi.fn()}
+          sidebarCollapsed={true}
+          onToggleDesktopSidebar={onToggleDesktopSidebar}
+          isGenerating={false}
+        />
+        <Sidebar
+          activeTab="routine"
+          onSelectTab={vi.fn()}
+          presets={REGIONAL_PRESETS}
+          activePresetId={preset.id}
+          onSelectPreset={onSelectPreset}
+          profile={preset.profile}
+          savedBaseline={matchingBaseline}
+          onSaveBaseline={vi.fn()}
+          onCheckLiveAqi={vi.fn()}
+          isCheckingLive={false}
+          onOpenCustomizer={vi.fn()}
+          counts={{ routine: 4, indoor: 3, community: 3 }}
+          collapsed={true}
+          onToggleCollapsed={onToggleCollapsed}
+          mobileOpen={false}
+          onCloseMobile={vi.fn()}
+        />
+      </>,
+    );
+
+    const aside = screen.getByTestId('desktop-sidebar');
+    expect(aside).toHaveAttribute('data-collapsed', 'true');
+
+    const topBarToggle = screen.getByRole('button', { name: 'Expand navigation sidebar' });
+    expect(topBarToggle).toHaveAttribute('aria-expanded', 'false');
+    await user.click(topBarToggle);
+    expect(onToggleDesktopSidebar).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByRole('button', { name: 'Expand sidebar' }));
+    expect(onToggleCollapsed).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByRole('button', { name: 'Salt Lake City (168 AQI)' }));
+    expect(onSelectPreset).toHaveBeenCalledWith('salt-lake');
+  });
 });

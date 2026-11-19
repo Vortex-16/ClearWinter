@@ -104,4 +104,24 @@ describe('App integration flows', () => {
     expect(/\p{Extended_Pictographic}/u.test(container.innerHTML)).toBe(false);
     expect(/bg-gradient-to|linear-gradient/i.test(container.innerHTML)).toBe(false);
   });
+
+  it('toggles the fixed desktop sidebar via rail button, header button, and Ctrl+B shortcut', async () => {
+    mockStaticEndpoints(312);
+    window.localStorage.clear();
+    const user = userEvent.setup();
+
+    render(<App />);
+
+    const aside = screen.getByTestId('desktop-sidebar');
+    expect(aside).toHaveAttribute('data-collapsed', 'false');
+
+    await user.click(screen.getByRole('button', { name: 'Collapse sidebar' }));
+    expect(aside).toHaveAttribute('data-collapsed', 'true');
+
+    await user.click(screen.getByRole('button', { name: 'Expand navigation sidebar' }));
+    expect(aside).toHaveAttribute('data-collapsed', 'false');
+
+    await user.keyboard('{Control>}b{/Control}');
+    expect(aside).toHaveAttribute('data-collapsed', 'true');
+  });
 });

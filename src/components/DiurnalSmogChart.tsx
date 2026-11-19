@@ -17,7 +17,7 @@ export function DiurnalSmogChart({ aqi, bestVentilationWindow }: DiurnalSmogChar
   return (
     <section
       aria-label="24-hour winter inversion curve and ventilation window"
-      className="bg-white border border-slate-200 rounded-xl p-5 space-y-4"
+      className="bg-white border border-slate-200/90 rounded-2xl p-5 space-y-4 shadow-2xs"
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -63,11 +63,11 @@ export function DiurnalSmogChart({ aqi, bestVentilationWindow }: DiurnalSmogChar
                 onClick={() => setSelectedHour(point.hour)}
                 aria-label={`${point.label}: ${point.pm25} micrograms per cubic meter, ${point.phaseLabel}`}
                 aria-pressed={isSelected}
-                className="h-full flex items-end focus-visible:outline-2 focus-visible:outline-teal-700 rounded-sm"
+                className="group h-full flex items-end focus-visible:outline-2 focus-visible:outline-teal-700 rounded-sm"
               >
                 <span
                   style={{ height: `${heightPct}%` }}
-                  className={`w-full rounded-t-sm transition-colors ${barClass} ${
+                  className={`w-full rounded-t-sm transition-all duration-150 group-hover:-translate-y-0.5 ${barClass} ${
                     isSelected ? 'ring-2 ring-slate-900 ring-offset-1' : ''
                   }`}
                 />

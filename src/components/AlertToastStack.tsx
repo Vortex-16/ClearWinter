@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from 'motion/react';
 import { ArrowUpRight, ShieldAlert, X } from 'lucide-react';
 import type { AqiAlertToast } from '../types/air';
 
@@ -22,60 +23,67 @@ export function AlertToastStack({
       aria-label="Real-time air quality alerts"
       className="fixed bottom-4 right-4 left-4 sm:left-auto z-50 flex flex-col gap-2.5 sm:w-96 max-w-full pointer-events-none"
     >
-      {alerts.map((alert) => (
-        <div
-          key={alert.id}
-          role="alert"
-          aria-live="assertive"
-          data-testid={`aqi-toast-${alert.currentAqi}`}
-          className="pointer-events-auto rounded-xl border border-red-300 bg-white p-4 shadow-lg space-y-2.5"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-start gap-2.5 min-w-0">
-              <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-700 border border-red-200">
-                <ShieldAlert className="h-4 w-4" aria-hidden="true" />
-              </div>
-              <div className="min-w-0 space-y-0.5">
-                <div className="text-xs font-semibold text-red-800">
-                  Air Quality Alert · {alert.currentSeverity}
+      <AnimatePresence initial={false}>
+        {alerts.map((alert) => (
+          <motion.div
+            key={alert.id}
+            layout
+            initial={{ opacity: 0, y: 12, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.97 }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            role="alert"
+            aria-live="assertive"
+            data-testid={`aqi-toast-${alert.currentAqi}`}
+            className="pointer-events-auto rounded-2xl border border-red-300 bg-white p-4 shadow-lg space-y-2.5"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-2.5 min-w-0">
+                <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-700 border border-red-200">
+                  <ShieldAlert className="h-4 w-4" aria-hidden="true" />
                 </div>
-                <div className="text-sm font-semibold text-slate-900 truncate">
-                  {alert.city}
+                <div className="min-w-0 space-y-0.5">
+                  <div className="text-xs font-semibold text-red-800">
+                    Air Quality Alert · {alert.currentSeverity}
+                  </div>
+                  <div className="text-sm font-semibold text-slate-900 truncate">
+                    {alert.city}
+                  </div>
                 </div>
               </div>
+
+              <button
+                type="button"
+                onClick={() => onDismiss(alert.id)}
+                aria-label={`Dismiss AQI alert for ${alert.city}`}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 active:scale-[0.94] transition-all duration-150 focus-visible:outline-2 focus-visible:outline-teal-700 shrink-0"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
             </div>
 
-            <button
-              type="button"
-              onClick={() => onDismiss(alert.id)}
-              aria-label={`Dismiss AQI alert for ${alert.city}`}
-              className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-2 focus-visible:outline-teal-700 shrink-0"
-            >
-              <X className="h-4 w-4" aria-hidden="true" />
-            </button>
-          </div>
+            <p className="text-xs text-slate-700 leading-relaxed">{alert.reason}</p>
 
-          <p className="text-xs text-slate-700 leading-relaxed">{alert.reason}</p>
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+              <div className="font-mono text-xs tabular-nums text-slate-600">
+                <span>{alert.baselineAqi}</span>
+                <span aria-hidden="true"> → </span>
+                <span className="font-semibold text-red-700">{alert.currentAqi} AQI</span>
+                <span className="text-slate-400"> · {alert.pm25} µg/m³</span>
+              </div>
 
-          <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
-            <div className="font-mono text-xs tabular-nums text-slate-600">
-              <span>{alert.baselineAqi}</span>
-              <span aria-hidden="true"> → </span>
-              <span className="font-semibold text-red-700">{alert.currentAqi} AQI</span>
-              <span className="text-slate-400"> · {alert.pm25} µg/m³</span>
+              <button
+                type="button"
+                onClick={() => onApplyLiveAqi(alert)}
+                className="inline-flex items-center gap-1 rounded-lg bg-red-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-800 active:scale-[0.97] transition-all duration-150 whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-red-700"
+              >
+                <span>Apply {alert.currentAqi} AQI</span>
+                <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
             </div>
-
-            <button
-              type="button"
-              onClick={() => onApplyLiveAqi(alert)}
-              className="inline-flex items-center gap-1 rounded-lg bg-red-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-800 transition-colors whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-red-700"
-            >
-              <span>Apply {alert.currentAqi} AQI</span>
-              <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-      ))}
+          </motion.div>
+        ))}
+      </AnimatePresence>
     </div>
   );
 }
