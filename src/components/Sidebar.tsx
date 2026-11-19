@@ -85,7 +85,7 @@ export function Sidebar({
   const baselineMatchesProfile =
     profile.city.trim().toLowerCase() === savedBaseline.city.trim().toLowerCase() &&
     Math.round(profile.aqi) === savedBaseline.baselineAqi;
-  const sidebarBody = (
+  const renderSidebarBody = (isMobileDrawer: boolean) => (
     <div className="flex h-full flex-col justify-between bg-white border-r border-slate-200 px-4 py-5">
       <div className="space-y-6">
         <div className="flex items-center justify-between px-2">
@@ -107,7 +107,10 @@ export function Sidebar({
           </button>
         </div>
 
-        <nav aria-label="Workspace sections" className="space-y-1">
+        <nav
+          aria-label={isMobileDrawer ? 'Mobile workspace sections' : 'Workspace sections'}
+          className="space-y-1"
+        >
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -243,16 +246,23 @@ export function Sidebar({
 
   return (
     <>
-      <aside className="hidden lg:block w-64 shrink-0">{sidebarBody}</aside>
+      <aside className="hidden lg:block w-64 shrink-0" aria-hidden={mobileOpen || undefined}>
+        {renderSidebarBody(false)}
+      </aside>
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden flex">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Workspace navigation menu"
+          className="fixed inset-0 z-50 lg:hidden flex"
+        >
           <div
             className="fixed inset-0 bg-slate-900/50"
             aria-hidden="true"
             onClick={onCloseMobile}
           />
-          <div className="relative w-72 max-w-[85vw] h-full z-10">{sidebarBody}</div>
+          <div className="relative w-72 max-w-[85vw] h-full z-10">{renderSidebarBody(true)}</div>
         </div>
       )}
     </>

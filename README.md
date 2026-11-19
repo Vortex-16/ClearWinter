@@ -65,7 +65,7 @@ ClearWinter uses a **hybrid architecture**: deterministic environmental health m
 └───────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Getting Started
+### Getting Started (Full-Stack Local / Cloud Run)
 1. **Configure Secrets**: Set `GEMINI_API_KEY` in `.env` (or AI Studio **Settings > Secrets**). Never expose API keys to client code.
 2. **Install & Run**:
    ```bash
@@ -74,11 +74,18 @@ ClearWinter uses a **hybrid architecture**: deterministic environmental health m
    ```
 3. **Verify Quality & Tests**:
    ```bash
-   npm test       # Runs 13 deterministic unit tests (node:test via tsx)
+   npm test       # Runs 54 Vitest, RTL, and axe-core tests across 13 files
    npm run lint   # Strict TypeScript check (tsc --noEmit)
-   npm run build  # Production Vite bundle
+   npm run build  # Production Vite bundle (dist/ + .nojekyll + 404.html)
    npm start      # Runs production server on port 3000
    ```
+
+### GitHub Pages Deployment (`main` branch)
+Because ClearWinter uses Vite, React 19, and TypeScript, browsers cannot execute raw uncompiled `/src/main.tsx` directly from the `main` branch root. Everything GitHub Pages requires is already configured in the repository:
+- `.github/workflows/deploy-pages.yml`: Automatically triggers on every push to `main`, runs `npm ci`, `npm run lint`, `npm test`, and `npm run build`, uploads `./dist`, and deploys via `actions/deploy-pages@v4`.
+- `.github/workflows/ci.yml`: Runs lint, full test suite, and build checks on pushes and pull requests to `main`.
+- `vite.config.ts` & `public/.nojekyll`: Configures relative asset paths (`base: './'`) so subpath hosting (`https://<user>.github.io/<repo>/`) resolves assets cleanly, disables Jekyll underscore filtering (`.nojekyll`), and copies `index.html` to `404.html` for SPA routing.
+- **One-Time GitHub Repository Setting**: In your repository, open **Settings → Pages → Build and deployment → Source** and select **GitHub Actions** (instead of "Deploy from a branch"). Once saved, pushing to `main` deploys the compiled site automatically. On static GitHub Pages hosting, live AQI monitoring falls back cleanly to public Open-Meteo CORS endpoints, and the **Apply Locally** option updates the deterministic EPA exposure, 24-hour inversion, and 12-week Recharts models without requiring a Node backend.
 
 ---
 
@@ -88,14 +95,42 @@ ClearWinter uses a **hybrid architecture**: deterministic environmental health m
 2. **Breathing Rate for 12-Week Dose Projections**: Seasonal inhaled PM2.5 projections (`mg`) assume an average household member respiratory volume of `14 m³/day` (`98 m³/week`) weighted across a 12-week mid-winter severity curve.
 3. **Additive vs. Multiplicative Mitigation**: Individual actions reduce remaining indoor/personal PM2.5 exposure multiplicatively (scaled and capped at `82%` total reduction) rather than linearly summing percentages, preventing physically impossible `>100%` reductions. Week 1 applies an `80%` ramp factor as sealing and routine adjustments settle.
 4. **Alert Thresholds & Baseline Persistence**: A user's saved location baseline is persisted locally in `localStorage`. Real-time alert toasts trigger on any EPA severity-tier escalation or a `≥ 15` AQI jump above baseline to balance early warning with low alert fatigue.
-5. **Resilient Live Telemetry**: The server queries Open-Meteo's Geocoding and Air Quality APIs with a 3-second timeout and falls back cleanly to server-cached station broadcasts (`/api/aqi-report`) if external requests are unavailable, while starter regional presets (**Delhi NCR**, **Salt Lake City**, **Kraków**, **Lahore**) ensure immediate offline usability.
+5. **Resilient Live Telemetry**: The Express server queries Open-Meteo's Geocoding and Air Quality APIs with a 3-second timeout and falls back cleanly to server-cached station broadcasts (`/api/aqi-report`). On static deployments (GitHub Pages), `aqiAlertService.ts` checks `/api/health` and switches cleanly to direct browser Open-Meteo polling while starter regional presets (**Delhi NCR**, **Salt Lake City**, **Kraków**, **Lahore**) provide immediate offline usability.
 
 ---
 
-## 5. Engineering Standards Covered
+## 5. Engineering & Security Standards Covered
 
-- **Code Quality**: Modular separation between pure domain logic (`src/utils/`), real-time client services (`src/services/`), focused UI components (`src/components/`), and server routes (`server.ts`).
-- **Security**: `GEMINI_API_KEY` is strictly isolated on the server (`server.ts`); all endpoints enforce input validation, payload size bounds (`100kb`), string length caps, and security headers (`X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`). Missing or invalid API errors propagate transparently rather than being masked.
+- **Code Quality**: Modular separation between pure domain logic (`src/utils/`), real-time client services (`src/services/`), focused UI components (`src/components/`), server security guards (`server/security.ts`), and Express routes (`server.ts`).
+- **Security Hardening**:
+  - `GEMINI_API_KEY` is strictly isolated on the server (`server.ts`) and never bundled into client JavaScript.
+  - All inputs (`POST /api/plan`, `POST /api/ask`, `POST /api/aqi-report`) pass through `server/security.ts` for control-character stripping, strict field bounds, array caps, and numeric range checks.
+  - Per-IP sliding-window rate limiting (`createRateLimiter`) caps AI routes (`25 req/min`) and station reports (`60 req/min`) with bounded key memory (`maxKeys = 2000`) and standard `Retry-After` responses.
+  - HTTP hardening headers (`X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`), disabled `X-Powered-By`, `100kb` JSON body cap, and bounded SSE subscribers (`MAX_SSE_SUBSCRIBERS = 200`) / city cache (`MAX_CACHED_CITIES = 500`).
+  - Static-host fetch safety checks `content-type: application/json` before parsing responses so HTML `404` pages on GitHub Pages never trigger JSON syntax crashes.
 - **Efficiency**: Uses `gemini-4-hydrogen` with `ThinkingLevel.LOW` and structured schemas for fast low-token responses, `useMemo` for derived client impact metrics, and non-blocking SSE heartbeats with cleanup on disconnect.
-- **Testing**: 13 automated unit tests (`npm test`) validate EPA AQI math, diurnal inversion curves, impact aggregation, 12-week exposure projections, filtering, form validation, and alert deduplication.
-- **Accessibility**: Semantic HTML (`<nav>`, `<main>`, `<article>`, `role="dialog"`, `role="alert"`, `aria-live="assertive"`), `Escape` key modal dismissal, `focus-visible` outlines, WCAG AA color contrast paired with explicit status labels/icons, and `prefers-reduced-motion` support.
+- **Accessibility**: Semantic HTML (`<nav>`, `<main>`, `<article>`, `role="dialog"`, `role="alert"`, `aria-live="assertive"`), `Escape` key modal dismissal, `focus-visible` outlines, WCAG AA color contrast paired with explicit status labels/icons (zero emojis, zero CSS gradients), and `prefers-reduced-motion` support.
+
+---
+
+## 6. Test Coverage & Verification Results (`npm test`)
+
+All **54 automated tests across 13 test files** validate every layer using **Vitest**, **React Testing Library**, and **axe-core**:
+
+| Test Suite | Tests | Scope Covered |
+| --- | ---: | --- |
+| `src/utils/airImpact.test.ts` | 11 | EPA AQI breakpoints & clamping, PM2.5 conversion, 24h inversion curve, multiplicative 82% cap, modern vs. older infiltration, 12-week ramp projection, search/status filtering, profile validation |
+| `src/utils/aqiAlertRules.test.ts` | 6 | City normalization, severity-tier jump alerts, `>=15` spike alerts, idempotent deduplication, unrelated-city/out-of-range isolation, corrupt `localStorage` & quota recovery |
+| `src/data/presets.test.ts` | 1 | Preset schema integrity, unique preset/action IDs, valid `defaultAdoptedIds`, balanced categories, strict no-emoji enforcement |
+| `server/security.test.ts` | 5 | Control-character stripping, `/api/plan` & `/api/ask` & `/api/aqi-report` payload sanitization, per-IP rate limiting, window reset, and bounded key cache eviction |
+| `src/services/aqiAlertService.test.ts` | 5 | `localStorage` baseline persistence, `/api/health` JSON detection, Open-Meteo geocoding & AQI normalization, static GitHub Pages 404 fallback, live worsening subscription alerts |
+| `src/components/ActionWorkspace.test.tsx` | 4 | Category views, Personal/Community impact rendering, adopt toggle clicks, filter/search callbacks, empty-state Reset Filters, accessible loading skeletons |
+| `src/components/DiurnalSmogChart.test.tsx` | 2 | 24 hourly bar buttons, default 2 PM midday window selection, interactive click switching to morning rush-hour cold trap readout |
+| `src/components/ImpactStrip.test.tsx` | 2 | Live exposure/CO2e/PM2.5 metrics, Recharts 12-week exposure projection rendering, zero-adoption banner state |
+| `src/components/ProfileCustomizerModal.test.tsx` | 3 | Closed mount behavior, empty city & out-of-range AQI validation, priority checkboxes, **Apply Locally** & **Generate Tailored Plan** callbacks, `Escape` dismissal, server alert display |
+| `src/components/AskAssistantView.test.tsx` | 3 | Empty-submit validation, `/api/ask` submission & takeaway message propagation, static-host HTML 404 friendly error alert |
+| `src/components/NavigationAndAlerts.test.tsx` | 3 | `TopBar` title/CTA, `Sidebar` tab/preset/conditional baseline-save/live-check interactions, `AlertToastStack` dismiss & apply buttons |
+| `src/App.test.tsx` | 3 | End-to-end `<App />` RTL flows: preset switching, habit adoption metric updates, live AQI worsening toast -> Apply flow, tab navigation, custom profile local apply, zero emojis/gradients |
+| `src/tests/accessibility.test.ts` | 6 | Automated `axe-core` WCAG/ARIA audits across `App`, `TopBar`, `Sidebar` (desktop + mobile drawer), `ImpactStrip`, `DiurnalSmogChart`, `ActionWorkspace` (populated/empty/loading), `AskAssistantView`, `ProfileCustomizerModal`, and `AlertToastStack` |
+| **Total** | **54** | **54 passed, 0 failed** |
+

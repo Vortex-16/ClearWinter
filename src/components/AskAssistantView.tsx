@@ -48,6 +48,13 @@ export function AskAssistantView({
         }),
       });
 
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error(
+          'Live Gemini AI backend is unavailable on static hosting. Run the Express server with GEMINI_API_KEY configured to use interactive Q&A.',
+        );
+      }
+
       const data = (await response.json()) as {
         answer?: string;
         personalTakeaway?: string;

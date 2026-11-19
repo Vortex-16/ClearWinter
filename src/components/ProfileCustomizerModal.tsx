@@ -10,6 +10,7 @@ interface ProfileCustomizerModalProps {
   apiError: string | null;
   onClose: () => void;
   onGeneratePlan: (profile: HouseholdProfile) => Promise<void>;
+  onApplyLocalProfile: (profile: HouseholdProfile) => void;
 }
 
 const HOUSEHOLD_OPTIONS = [
@@ -59,6 +60,7 @@ export function ProfileCustomizerModal({
   apiError,
   onClose,
   onGeneratePlan,
+  onApplyLocalProfile,
 }: ProfileCustomizerModalProps) {
   const [formState, setFormState] = useState<HouseholdProfile>(initialProfile);
   const [errors, setErrors] = useState<ProfileValidationErrors>({});
@@ -100,6 +102,16 @@ export function ProfileCustomizerModal({
     }
     setErrors({});
     await onGeneratePlan(formState);
+  }
+
+  function handleApplyLocal() {
+    const validation = validateProfileInput(formState);
+    if (Object.keys(validation).length > 0) {
+      setErrors(validation);
+      return;
+    }
+    setErrors({});
+    onApplyLocalProfile(formState);
   }
 
   return (
@@ -289,13 +301,21 @@ export function ProfileCustomizerModal({
             </div>
           </fieldset>
 
-          <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-4">
+          <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 pt-4">
             <button
               type="button"
               onClick={onClose}
               className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors focus-visible:outline-2 focus-visible:outline-teal-700"
             >
               Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleApplyLocal}
+              disabled={isGenerating}
+              className="rounded-lg border border-slate-300 bg-slate-50 px-4 py-2 text-xs sm:text-sm font-medium text-slate-800 hover:bg-slate-100 disabled:opacity-60 transition-colors whitespace-nowrap focus-visible:outline-2 focus-visible:outline-teal-700"
+            >
+              Apply Locally
             </button>
             <button
               type="submit"

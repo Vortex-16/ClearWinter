@@ -162,6 +162,13 @@ export default function App() {
     setAlerts((prev) => prev.filter((item) => item.id !== alert.id));
   }
 
+  function handleApplyLocalProfile(nextProfile: HouseholdProfile) {
+    setActivePresetId(null);
+    setProfile(nextProfile);
+    setPlanError(null);
+    setCustomizerOpen(false);
+  }
+
   async function handleGenerateCustomPlan(nextProfile: HouseholdProfile) {
     setIsGeneratingPlan(true);
     setPlanError(null);
@@ -172,6 +179,13 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(nextProfile),
       });
+
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error(
+          'Live Gemini AI backend is unavailable on static hosting (such as GitHub Pages). Click "Apply Locally" to update the EPA exposure and 12-week models with your profile, or run the Express server with GEMINI_API_KEY.',
+        );
+      }
 
       const data = (await response.json()) as Partial<GeneratedPlanPayload> & { error?: string };
 
@@ -311,6 +325,7 @@ export default function App() {
         apiError={planError}
         onClose={() => setCustomizerOpen(false)}
         onGeneratePlan={handleGenerateCustomPlan}
+        onApplyLocalProfile={handleApplyLocalProfile}
       />
 
       <AlertToastStack

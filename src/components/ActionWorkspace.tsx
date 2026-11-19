@@ -118,7 +118,12 @@ export function ActionWorkspace({
       </div>
 
       {isLoading ? (
-        <div className="space-y-4" aria-busy="true" aria-label="Generating tailored actions">
+        <div
+          role="status"
+          className="space-y-4"
+          aria-busy="true"
+          aria-label="Generating tailored actions"
+        >
           {[1, 2, 3].map((n) => (
             <div
               key={n}

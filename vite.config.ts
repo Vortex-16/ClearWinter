@@ -6,6 +6,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    base: process.env.VITE_BASE_PATH || './',
     plugins: [
       react(),
       tailwindcss(),
@@ -24,6 +25,14 @@ export default defineConfig(() => {
           const distAssets = path.resolve(distDir, 'src/assets');
           if (fs.existsSync(distDir) && fs.existsSync(srcAssets)) {
             fs.cpSync(srcAssets, distAssets, {recursive: true, force: true});
+          }
+          // Ensure GitHub Pages static deployments disable Jekyll and support SPA 404 fallback
+          if (fs.existsSync(distDir)) {
+            fs.writeFileSync(path.join(distDir, '.nojekyll'), '');
+            const builtIndex = path.join(distDir, 'index.html');
+            if (fs.existsSync(builtIndex)) {
+              fs.copyFileSync(builtIndex, path.join(distDir, '404.html'));
+            }
           }
         },
       },
