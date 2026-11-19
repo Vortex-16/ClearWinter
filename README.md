@@ -82,7 +82,7 @@ ClearWinter uses a **hybrid architecture**: deterministic environmental health m
 
 ### GitHub Pages Deployment (`main` branch)
 Because ClearWinter uses Vite, React 19, and TypeScript, browsers cannot execute raw uncompiled `/src/main.tsx` directly from the `main` branch root. Everything GitHub Pages requires is already configured in the repository:
-- `.github/workflows/deploy-pages.yml`: Automatically triggers on every push to `main`, runs `npm ci`, `npm run lint`, `npm test`, and `npm run build`, uploads `./dist`, and deploys via `actions/deploy-pages@v4`.
+- `.github/workflows/deploy-pages.yml`: Automatically triggers on every push to `main`, installs dependencies (`npm ci` when `package-lock.json` is present or `npm install` otherwise), runs `npm run lint`, `npm test`, and `npm run build`, uploads `./dist`, and deploys via `actions/deploy-pages@v4`.
 - `.github/workflows/ci.yml`: Runs lint, full test suite, and build checks on pushes and pull requests to `main`.
 - `vite.config.ts` & `public/.nojekyll`: Configures relative asset paths (`base: './'`) so subpath hosting (`https://<user>.github.io/<repo>/`) resolves assets cleanly, disables Jekyll underscore filtering (`.nojekyll`), and copies `index.html` to `404.html` for SPA routing.
 - **One-Time GitHub Repository Setting**: In your repository, open **Settings → Pages → Build and deployment → Source** and select **GitHub Actions** (instead of "Deploy from a branch"). Once saved, pushing to `main` deploys the compiled site automatically. On static GitHub Pages hosting, live AQI monitoring falls back cleanly to public Open-Meteo CORS endpoints, and the **Apply Locally** option updates the deterministic EPA exposure, 24-hour inversion, and 12-week Recharts models without requiring a Node backend.
