@@ -33,6 +33,7 @@ export type ValidationResult<T> =
   | { ok: true; value: T }
   | { ok: false; error: string };
 
+/** Removes ASCII control characters and collapses runs of whitespace to keep inputs single-line safe. */
 export function stripControlChars(input: string): string {
   return input.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
 }
@@ -43,6 +44,7 @@ function cleanBoundedText(value: unknown, fallback: string, maxLen: number): str
   return cleaned || fallback;
 }
 
+/** Validates and normalizes household profile payloads submitted to POST /api/plan. */
 export function sanitizeProfileBody(raw: unknown): ValidationResult<SanitizedProfile> {
   const body = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const city = typeof body.city === 'string' ? stripControlChars(body.city).slice(0, 100) : '';
@@ -79,6 +81,7 @@ export function sanitizeProfileBody(raw: unknown): ValidationResult<SanitizedPro
   };
 }
 
+/** Validates assistant Q&A questions, bounded conversation history, and profile context. */
 export function sanitizeAskBody(raw: unknown): ValidationResult<SanitizedAskPayload> {
   const body = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const question = typeof body.question === 'string' ? stripControlChars(body.question) : '';
@@ -136,6 +139,7 @@ export function sanitizeAskBody(raw: unknown): ValidationResult<SanitizedAskPayl
   };
 }
 
+/** Validates live station AQI report payloads submitted to POST /api/aqi-report. */
 export function sanitizeAqiReportBody(raw: unknown): ValidationResult<SanitizedAqiReport> {
   const body = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const city = typeof body.city === 'string' ? stripControlChars(body.city).slice(0, 100) : '';
@@ -180,6 +184,10 @@ export interface RateLimitDecision {
   retryAfterSeconds: number;
 }
 
+/**
+ * Creates a bounded in-memory sliding-window rate limiter per client key.
+ * Evicts the oldest entry when `maxKeys` is reached to cap memory under burst traffic.
+ */
 export function createRateLimiter({
   windowMs,
   maxRequests,

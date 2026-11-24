@@ -17,6 +17,7 @@ export const SEVERITY_RANK: Record<AqiSeverity, number> = {
   Hazardous: 5,
 };
 
+/** Normalizes a city string to its lowercase primary locality segment for resilient comparisons. */
 export function normalizeCityName(city: string): string {
   return city
     .split(',')[0]
@@ -25,6 +26,7 @@ export function normalizeCityName(city: string): string {
     .replace(/\s+/g, ' ');
 }
 
+/** Returns true when two city labels refer to the same locality (exact or prefix/substring overlap). */
 export function citiesMatch(cityA: string, cityB: string): boolean {
   const normA = normalizeCityName(cityA);
   const normB = normalizeCityName(cityB);
@@ -38,6 +40,10 @@ export interface EvaluateWorseningInput {
   lastAlertedAqi: number | null;
 }
 
+/**
+ * Evaluates whether an incoming AQI telemetry event warrants alerting the user
+ * (either severity-band escalation or a >= 15 AQI point jump above saved baseline).
+ */
 export function evaluateAqiWorsening({
   baseline,
   reading,
@@ -103,6 +109,7 @@ export interface StorageLike {
   setItem(key: string, value: string): void;
 }
 
+/** Loads and schema-validates a persisted location baseline from storage, falling back safely. */
 export function loadSavedBaseline(
   storage: StorageLike | null,
   fallback: SavedLocationBaseline,
@@ -132,6 +139,7 @@ export function loadSavedBaseline(
   return fallback;
 }
 
+/** Persists the active location baseline to storage, ignoring quota/private-browsing exceptions. */
 export function persistSavedBaseline(
   storage: StorageLike | null,
   baseline: SavedLocationBaseline,

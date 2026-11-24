@@ -19,6 +19,7 @@ const STATIC_HOST_PLAN_ERROR =
 const STATIC_HOST_ASK_ERROR =
   'Live Gemini AI backend is unavailable on static hosting. Run the Express server with GEMINI_API_KEY configured to use interactive Q&A.';
 
+/** Parses JSON API responses and detects static-hosting HTML fallbacks (e.g. GitHub Pages). */
 async function parseJsonApiResponse<T>(
   response: Response,
   staticFallbackError: string,
@@ -36,6 +37,7 @@ async function parseJsonApiResponse<T>(
   return data;
 }
 
+/** Requests a Gemini-tailored 10-action winter smog plan from POST /api/plan. */
 export async function requestTailoredPlan(
   profile: HouseholdProfile,
 ): Promise<GeneratedPlanPayload> {
@@ -64,6 +66,7 @@ export async function requestTailoredPlan(
   };
 }
 
+/** Sends a contextualized winter air-quality question to POST /api/ask. */
 export async function requestAssistantAnswer(
   payload: AskAssistantApiRequest,
 ): Promise<AskAssistantApiResponse> {

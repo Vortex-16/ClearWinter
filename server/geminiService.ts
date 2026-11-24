@@ -12,6 +12,7 @@ export interface AskAssistantResponse {
   communityTakeaway: string;
 }
 
+/** Instantiates a configured Gemini SDK client, failing fast when API key is missing or placeholder. */
 export function createGeminiClient(apiKey = process.env.GEMINI_API_KEY): GoogleGenAI {
   if (!apiKey || apiKey === 'MY_GEMINI_API_KEY') {
     throw new Error(
@@ -28,6 +29,7 @@ export function createGeminiClient(apiKey = process.env.GEMINI_API_KEY): GoogleG
   });
 }
 
+/** Retries transient Gemini API failures (429/503) using linear backoff. */
 export async function withRetry<T>(
   fn: () => Promise<T>,
   maxRetries = 2,
@@ -54,6 +56,7 @@ export async function withRetry<T>(
   throw lastError;
 }
 
+/** Maps internal Gemini SDK errors to safe, client-facing HTTP status codes and sanitized messages. */
 export function formatGeminiError(error: unknown): { status: number; message: string } {
   const raw = error instanceof Error ? error.message : '';
   if (raw.includes('GEMINI_API_KEY is not configured')) {
@@ -78,6 +81,7 @@ export function formatGeminiError(error: unknown): { status: number; message: st
   };
 }
 
+/** Normalizes and clamps LLM-generated actions so numeric fields and enums remain strictly bounded. */
 export function sanitizeGeneratedActions(rawActions: Array<Record<string, unknown>>): AirAction[] {
   const validCategories = new Set<AirAction['category']>(['routine', 'indoor', 'community']);
   const validCostTiers = new Set<AirAction['costTier']>([
@@ -122,6 +126,7 @@ export function sanitizeGeneratedActions(rawActions: Array<Record<string, unknow
   });
 }
 
+/** Generates a structured 10-action winter smog mitigation plan with XML data boundaries around user inputs. */
 export async function generateTailoredPlan(
   profile: SanitizedProfile,
   clientFactory: () => GoogleGenAI = createGeminiClient,
@@ -246,6 +251,7 @@ export async function generateTailoredPlan(
   };
 }
 
+/** Answers a household winter air question using XML-delimited context and JSON schema output. */
 export async function answerAirQuestion(
   payload: SanitizedAskPayload,
   clientFactory: () => GoogleGenAI = createGeminiClient,

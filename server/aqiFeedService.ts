@@ -26,6 +26,10 @@ export function citiesOverlap(cityA: string, cityB: string): boolean {
   return Boolean(a && b && (a === b || a.includes(b) || b.includes(a)));
 }
 
+/**
+ * Queries Open-Meteo geocoding + air-quality APIs with a 3-second timeout.
+ * Returns null gracefully when upstream telemetry is unreachable.
+ */
 export async function fetchLiveOpenMeteoAqi(
   city: string,
   fetchImpl: typeof fetch = globalThis.fetch,
@@ -78,6 +82,7 @@ export async function fetchLiveOpenMeteoAqi(
   }
 }
 
+/** Manages active SSE subscribers and bounded per-city telemetry cache across stations. */
 export function createAqiFeedHub() {
   const subscribers = new Set<AqiSubscriber>();
   const latestReadings = new Map<string, ServerAqiReading>();

@@ -29,6 +29,10 @@ export interface SidebarStateController {
   closeMobile: () => void;
 }
 
+/**
+ * Manages persisted desktop sidebar rail collapse state, mobile drawer visibility,
+ * and global Ctrl/Cmd+B + Escape keyboard shortcuts.
+ */
 export function useSidebarState(): SidebarStateController {
   const [collapsed, setCollapsedState] = useState<boolean>(() => readStoredSidebarCollapsed());
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);

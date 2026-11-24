@@ -18,6 +18,7 @@ function getBrowserStorage() {
   }
 }
 
+/** Reads the saved alert baseline from browser storage or falls back to the provided city/AQI. */
 export function getSavedLocationBaseline(
   fallbackCity: string,
   fallbackAqi: number,
@@ -29,6 +30,7 @@ export function getSavedLocationBaseline(
   });
 }
 
+/** Saves the user's current city and AQI threshold as their persisted alert baseline. */
 export function saveLocationBaseline(city: string, aqi: number): SavedLocationBaseline {
   const next: SavedLocationBaseline = {
     city: city.trim(),
@@ -45,6 +47,7 @@ export interface AqiStreamHandlers {
   onError?: (message: string) => void;
 }
 
+/** Checks whether the Express backend is running rather than static hosting by verifying JSON health response. */
 export async function isBackendAvailable(): Promise<boolean> {
   try {
     const res = await fetch('/api/health', { method: 'GET' });
@@ -56,6 +59,7 @@ export async function isBackendAvailable(): Promise<boolean> {
   }
 }
 
+/** Queries public Open-Meteo geocoding and air-quality endpoints directly when running on static hosting. */
 export async function fetchOpenMeteoDirect(city: string): Promise<AqiReadingEvent | null> {
   const cleanCity = city.split(',')[0].trim();
   if (!cleanCity) return null;
@@ -168,6 +172,7 @@ export function subscribeToAqiAlerts(
   };
 }
 
+/** Fetches the latest AQI reading from Express (/api/aqi-live) or falls back to direct Open-Meteo CORS polling. */
 export async function fetchLiveAqiReading(city: string): Promise<AqiReadingEvent | null> {
   try {
     const response = await fetch(`/api/aqi-live?city=${encodeURIComponent(city)}`);

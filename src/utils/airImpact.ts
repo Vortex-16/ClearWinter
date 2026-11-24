@@ -11,6 +11,7 @@ import type {
   ProfileValidationErrors,
 } from '../types/air';
 
+/** Maps a numeric US AQI score to its severity band, health advisory, and accessible Tailwind tokens. */
 export function classifyAqiBand(aqi: number): AqiClassification {
   const safeAqi = Math.max(0, Math.round(aqi));
 
@@ -148,6 +149,7 @@ export function getBaselineInfiltrationFactor(housingType: string): number {
   return housingType.toLowerCase().includes('modern') ? 0.52 : 0.68;
 }
 
+/** Computes ambient vs. estimated indoor PM2.5, cumulative exposure reduction, and weekly savings. */
 export function calculateImpactSummary(
   actions: AirAction[],
   adoptedIds: string[],
@@ -192,6 +194,7 @@ export function calculateImpactSummary(
   };
 }
 
+/** Filters actions by workspace category, adoption status, and multi-field keyword search. */
 export function filterActions(
   actions: AirAction[],
   category: ActionCategory,
@@ -232,6 +235,7 @@ export function filterActions(
   });
 }
 
+/** Validates household city and AQI range (1–500) prior to local update or AI plan requests. */
 export function validateProfileInput(profile: HouseholdProfile): ProfileValidationErrors {
   const errors: ProfileValidationErrors = {};
 
