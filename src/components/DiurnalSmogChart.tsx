@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { Clock } from 'lucide-react';
 import { buildHourlyInversionCurve } from '../utils/airImpact';
 
@@ -8,11 +8,26 @@ interface DiurnalSmogChartProps {
 }
 
 export function DiurnalSmogChart({ aqi, bestVentilationWindow }: DiurnalSmogChartProps) {
-  const points = buildHourlyInversionCurve(aqi);
+  const points = useMemo(() => buildHourlyInversionCurve(aqi), [aqi]);
   const [selectedHour, setSelectedHour] = useState<number>(14);
+  const barRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const maxPm25 = Math.max(...points.map((p) => p.pm25), 50);
   const activePoint = points[selectedHour] ?? points[14];
+
+  function handleBarKeyDown(event: KeyboardEvent<HTMLButtonElement>, hour: number) {
+    let nextHour: number | null = null;
+    if (event.key === 'ArrowRight') nextHour = (hour + 1) % 24;
+    else if (event.key === 'ArrowLeft') nextHour = (hour + 23) % 24;
+    else if (event.key === 'Home') nextHour = 0;
+    else if (event.key === 'End') nextHour = 23;
+
+    if (nextHour !== null) {
+      event.preventDefault();
+      setSelectedHour(nextHour);
+      barRefs.current[nextHour]?.focus();
+    }
+  }
 
   return (
     <section
@@ -25,7 +40,7 @@ export function DiurnalSmogChart({ aqi, bestVentilationWindow }: DiurnalSmogChar
             24-Hour Winter Thermal Inversion Curve
           </h2>
           <p className="text-xs text-slate-600 mt-0.5">
-            Select any hour bar to inspect particulate trapping and safe cross-ventilation timing.
+            Select any hour bar (or use Left/Right arrow keys) to inspect particulate trapping and safe cross-ventilation timing.
           </p>
         </div>
         <div className="flex items-start sm:items-center gap-2 text-xs text-teal-800 min-w-0">
@@ -59,8 +74,12 @@ export function DiurnalSmogChart({ aqi, bestVentilationWindow }: DiurnalSmogChar
             return (
               <button
                 key={point.hour}
+                ref={(el) => {
+                  barRefs.current[point.hour] = el;
+                }}
                 type="button"
                 onClick={() => setSelectedHour(point.hour)}
+                onKeyDown={(e) => handleBarKeyDown(e, point.hour)}
                 aria-label={`${point.label}: ${point.pm25} micrograms per cubic meter, ${point.phaseLabel}`}
                 aria-pressed={isSelected}
                 className="group h-full flex items-end focus-visible:outline-2 focus-visible:outline-teal-700 rounded-sm"
@@ -76,7 +95,7 @@ export function DiurnalSmogChart({ aqi, bestVentilationWindow }: DiurnalSmogChar
           })}
         </div>
 
-        <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 tabular-nums">
+        <div className="flex items-center justify-between text-xs font-mono text-slate-600 tabular-nums">
           <span>12 AM</span>
           <span>6 AM</span>
           <span>12 PM</span>
@@ -86,7 +105,10 @@ export function DiurnalSmogChart({ aqi, bestVentilationWindow }: DiurnalSmogChar
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700">
+        <div
+          aria-live="polite"
+          className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700"
+        >
           <span className="font-mono font-semibold text-slate-900 tabular-nums">
             {activePoint.label}
           </span>
@@ -95,12 +117,12 @@ export function DiurnalSmogChart({ aqi, bestVentilationWindow }: DiurnalSmogChar
             {activePoint.pm25} µg/m³ (est. AQI {activePoint.aqi})
           </span>
           <span aria-hidden="true">·</span>
-          <span className={activePoint.ventilationSafe ? 'font-medium text-teal-700' : 'text-slate-600'}>
+          <span className={activePoint.ventilationSafe ? 'font-medium text-teal-800' : 'text-slate-700'}>
             {activePoint.phaseLabel}
           </span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-500 shrink-0">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 shrink-0">
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-xs bg-teal-600" aria-hidden="true" />
             <span>Safe ventilation</span>

@@ -140,6 +140,14 @@ export function buildHourlyInversionCurve(baseAqi: number): HourlySmogPoint[] {
   });
 }
 
+/**
+ * Unmitigated older/drafty homes infiltrate ~68% of outdoor winter PM2.5;
+ * sealed modern apartments infiltrate ~52%.
+ */
+export function getBaselineInfiltrationFactor(housingType: string): number {
+  return housingType.toLowerCase().includes('modern') ? 0.52 : 0.68;
+}
+
 export function calculateImpactSummary(
   actions: AirAction[],
   adoptedIds: string[],
@@ -160,9 +168,7 @@ export function calculateImpactSummary(
   const rawReductionPct = Math.round((1 - remainingExposureFraction) * 100);
   const exposureReductionPct = Math.min(82, Math.max(0, rawReductionPct));
 
-  // Unmitigated older/drafty homes still infiltrate ~68% of outdoor winter PM2.5;
-  // sealed modern apartments infiltrate ~52%.
-  const baselineInfiltration = profile.housingType.toLowerCase().includes('modern') ? 0.52 : 0.68;
+  const baselineInfiltration = getBaselineInfiltrationFactor(profile.housingType);
   const baselineIndoorPm25 = outdoorPm25 * baselineInfiltration;
   const estimatedIndoorPm25 = Number(
     Math.max(4.0, baselineIndoorPm25 * (1 - exposureReductionPct / 100)).toFixed(1),
@@ -252,7 +258,7 @@ export function buildLongTermExposureProjection(
   weeks = 12,
 ): LongTermProjectionSummary {
   const safeWeeks = Math.max(4, Math.min(24, Math.round(weeks)));
-  const baselineInfiltration = profile.housingType.toLowerCase().includes('modern') ? 0.52 : 0.68;
+  const baselineInfiltration = getBaselineInfiltrationFactor(profile.housingType);
   const unmitigatedIndoorPm25 = impact.outdoorPm25 * baselineInfiltration;
   const weeklyAirCubicMeters = 98; // ~14 m3/day typical household member breathing rate
 

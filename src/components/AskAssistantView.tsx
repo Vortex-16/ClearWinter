@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { AlertCircle, ArrowRight, MessageSquareText, ShieldCheck, Sprout } from 'lucide-react';
+import { requestAssistantAnswer } from '../services/planApiService';
 import type { AssistantMessage, HouseholdProfile } from '../types/air';
 
 interface AskAssistantViewProps {
@@ -37,34 +38,12 @@ export function AskAssistantView({
     setIsSending(true);
 
     try {
-      const response = await fetch('/api/ask', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: trimmed,
-          profile,
-          adoptedTitles,
-          history: messages.map((m) => ({ role: m.role, content: m.content })),
-        }),
+      const data = await requestAssistantAnswer({
+        question: trimmed,
+        profile,
+        adoptedTitles,
+        history: messages.map((m) => ({ role: m.role, content: m.content })),
       });
-
-      const contentType = response.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        throw new Error(
-          'Live Gemini AI backend is unavailable on static hosting. Run the Express server with GEMINI_API_KEY configured to use interactive Q&A.',
-        );
-      }
-
-      const data = (await response.json()) as {
-        answer?: string;
-        personalTakeaway?: string;
-        communityTakeaway?: string;
-        error?: string;
-      };
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Unable to get a response from ClearWinter assistant.');
-      }
 
       const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const userMessage: AssistantMessage = {
@@ -110,7 +89,7 @@ export function AskAssistantView({
         </div>
 
         <div className="space-y-2">
-          <div className="text-xs font-medium text-slate-500">Suggested questions</div>
+          <div className="text-xs font-medium text-slate-600">Suggested questions</div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {STARTER_PROMPTS.map((promptText) => (
               <button
@@ -121,7 +100,7 @@ export function AskAssistantView({
                 className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-left text-xs font-medium text-slate-800 hover:bg-slate-100 hover:border-slate-300 disabled:opacity-60 transition-colors focus-visible:outline-2 focus-visible:outline-teal-700"
               >
                 <span>{promptText}</span>
-                <ArrowRight className="h-3.5 w-3.5 text-slate-400 shrink-0" aria-hidden="true" />
+                <ArrowRight className="h-3.5 w-3.5 text-slate-500 shrink-0" aria-hidden="true" />
               </button>
             ))}
           </div>
@@ -145,7 +124,7 @@ export function AskAssistantView({
         {messages.length === 0 ? (
           <div className="p-8 text-center space-y-2">
             <MessageSquareText
-              className="h-6 w-6 text-slate-400 mx-auto"
+              className="h-6 w-6 text-slate-500 mx-auto"
               aria-hidden="true"
             />
             <p className="text-sm font-medium text-slate-900">
@@ -156,13 +135,18 @@ export function AskAssistantView({
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-200">
+          <div
+            role="log"
+            aria-live="polite"
+            aria-label="Assistant conversation history"
+            className="divide-y divide-slate-200"
+          >
             {messages.map((msg) => (
               <div
                 key={msg.id}
                 className={`p-5 space-y-3 ${msg.role === 'user' ? 'bg-slate-50' : 'bg-white'}`}
               >
-                <div className="flex items-center justify-between text-xs text-slate-500">
+                <div className="flex items-center justify-between text-xs text-slate-600">
                   <span className="font-semibold text-slate-800">
                     {msg.role === 'user' ? 'Your Household Question' : 'ClearWinter Guidance'}
                   </span>

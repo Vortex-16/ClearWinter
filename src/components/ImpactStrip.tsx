@@ -23,7 +23,7 @@ export function ImpactStrip({ profile, impact }: ImpactStripProps) {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-200/80">
         <div className="p-4 sm:p-5 space-y-1.5 transition-colors duration-150 hover:bg-slate-50/70">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-medium text-slate-500">Ambient Winter Smog</span>
+            <span className="text-xs font-medium text-slate-600">Ambient Winter Smog</span>
             <span className={`inline-flex items-center gap-1 text-xs font-semibold ${band.textColorClass}`}>
               <StatusIcon className="h-3.5 w-3.5" aria-hidden="true" />
               <span>{band.severity}</span>
@@ -33,7 +33,7 @@ export function ImpactStrip({ profile, impact }: ImpactStripProps) {
             <span className="font-mono text-2xl font-semibold text-slate-900 tabular-nums">
               {profile.aqi}
             </span>
-            <span className="text-xs text-slate-500 font-mono tabular-nums">
+            <span className="text-xs text-slate-600 font-mono tabular-nums">
               AQI · {impact.outdoorPm25} µg/m³ outdoor
             </span>
           </div>
@@ -41,19 +41,19 @@ export function ImpactStrip({ profile, impact }: ImpactStripProps) {
 
         <div className="p-4 sm:p-5 space-y-2 transition-colors duration-150 hover:bg-slate-50/70">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-medium text-slate-500">Personal Exposure Cut</span>
-            <span className="font-mono text-[11px] tabular-nums text-slate-400">
+            <span className="text-xs font-medium text-slate-600">Personal Exposure Cut</span>
+            <span className="font-mono text-xs tabular-nums text-slate-600">
               max 82%
             </span>
           </div>
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <span
               data-testid="metric-exposure-cut"
-              className="font-mono text-2xl font-semibold text-teal-700 tabular-nums whitespace-nowrap shrink-0"
+              className="font-mono text-2xl font-semibold text-teal-800 tabular-nums whitespace-nowrap shrink-0"
             >
               -{impact.exposureReductionPct}%
             </span>
-            <span className="text-xs text-slate-500 font-mono tabular-nums">
+            <span className="text-xs text-slate-600 font-mono tabular-nums">
               est. {impact.estimatedIndoorPm25} µg/m³ indoor
             </span>
           </div>
@@ -66,7 +66,7 @@ export function ImpactStrip({ profile, impact }: ImpactStripProps) {
         </div>
 
         <div className="p-4 sm:p-5 space-y-1.5 transition-colors duration-150 hover:bg-slate-50/70">
-          <div className="text-xs font-medium text-slate-500">Weekly CO2e Avoided</div>
+          <div className="text-xs font-medium text-slate-600">Weekly CO2e Avoided</div>
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <span
               data-testid="metric-co2e-avoided"
@@ -74,14 +74,14 @@ export function ImpactStrip({ profile, impact }: ImpactStripProps) {
             >
               {impact.weeklyCo2eAvoidedKg.toFixed(1)} kg
             </span>
-            <span className="text-xs text-slate-500 font-mono tabular-nums">
+            <span className="text-xs text-slate-600 font-mono tabular-nums">
               from {impact.adoptedCount}/{impact.totalCount} habits
             </span>
           </div>
         </div>
 
         <div className="p-4 sm:p-5 space-y-1.5 transition-colors duration-150 hover:bg-slate-50/70">
-          <div className="text-xs font-medium text-slate-500">Local PM2.5 Prevented</div>
+          <div className="text-xs font-medium text-slate-600">Local PM2.5 Prevented</div>
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <span
               data-testid="metric-pm25-prevented"
@@ -89,7 +89,7 @@ export function ImpactStrip({ profile, impact }: ImpactStripProps) {
             >
               {impact.weeklyPm25AvoidedGrams.toFixed(1)} g
             </span>
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-slate-600">
               direct curb &amp; chimney cut
             </span>
           </div>

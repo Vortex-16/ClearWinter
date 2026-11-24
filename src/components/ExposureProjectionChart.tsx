@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { TrendingDown } from 'lucide-react';
 import {
   Area,
@@ -53,7 +54,10 @@ function ProjectionTooltip({ active, payload }: ChartTooltipProps) {
 }
 
 export function ExposureProjectionChart({ profile, impact }: ExposureProjectionChartProps) {
-  const projection = buildLongTermExposureProjection(impact, profile, 12);
+  const projection = useMemo(
+    () => buildLongTermExposureProjection(impact, profile, 12),
+    [impact, profile],
+  );
 
   return (
     <div
@@ -79,22 +83,22 @@ export function ExposureProjectionChart({ profile, impact }: ExposureProjectionC
 
         <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs shrink-0">
           <div>
-            <span className="text-slate-500">12-Week PM2.5 spared: </span>
+            <span className="text-slate-600">12-Week PM2.5 spared: </span>
             <span
               data-testid="projection-avoided-mg"
-              className="font-mono font-semibold tabular-nums text-teal-700"
+              className="font-mono font-semibold tabular-nums text-teal-800"
             >
               -{projection.totalAvoidedMg.toFixed(1)} mg
             </span>
           </div>
           <div>
-            <span className="text-slate-500">Seasonal CO2e: </span>
+            <span className="text-slate-600">Seasonal CO2e: </span>
             <span className="font-mono font-semibold tabular-nums text-slate-900">
               {projection.seasonalCo2eAvoidedKg.toFixed(1)} kg
             </span>
           </div>
           <div>
-            <span className="text-slate-500">Seasonal PM2.5 cut: </span>
+            <span className="text-slate-600">Seasonal PM2.5 cut: </span>
             <span className="font-mono font-semibold tabular-nums text-slate-900">
               {projection.seasonalPm25PreventedGrams.toFixed(1)} g
             </span>
@@ -154,7 +158,7 @@ export function ExposureProjectionChart({ profile, impact }: ExposureProjectionC
         </ResponsiveContainer>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <span className="inline-flex items-center gap-1.5">
             <span className="h-0.5 w-4 bg-slate-500 inline-block" aria-hidden="true" />

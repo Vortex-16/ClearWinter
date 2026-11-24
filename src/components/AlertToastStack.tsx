@@ -65,11 +65,11 @@ export function AlertToastStack({
             <p className="text-xs text-slate-700 leading-relaxed">{alert.reason}</p>
 
             <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
-              <div className="font-mono text-xs tabular-nums text-slate-600">
+              <div className="font-mono text-xs tabular-nums text-slate-700">
                 <span>{alert.baselineAqi}</span>
                 <span aria-hidden="true"> → </span>
                 <span className="font-semibold text-red-700">{alert.currentAqi} AQI</span>
-                <span className="text-slate-400"> · {alert.pm25} µg/m³</span>
+                <span className="text-slate-600"> · {alert.pm25} µg/m³</span>
               </div>
 
               <button

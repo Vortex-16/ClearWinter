@@ -11,12 +11,12 @@ import {
   saveLocationBaseline,
   subscribeToAqiAlerts,
 } from './services/aqiAlertService';
+import { requestTailoredPlan } from './services/planApiService';
 import type {
   AdoptionFilter,
   AirAction,
   AqiAlertToast,
   AssistantMessage,
-  GeneratedPlanPayload,
   HouseholdProfile,
   SavedLocationBaseline,
   WorkspaceTab,
@@ -64,6 +64,7 @@ export default function App() {
 
   const [alerts, setAlerts] = useState<AqiAlertToast[]>([]);
   const [isCheckingLive, setIsCheckingLive] = useState(false);
+  const [liveAnnouncement, setLiveAnnouncement] = useState('');
 
   useEffect(() => {
     const unsubscribe = subscribeToAqiAlerts(savedBaseline, {
@@ -116,6 +117,7 @@ export default function App() {
     setSearchQuery('');
     setMessages([]);
     setPlanError(null);
+    setLiveAnnouncement(`Switched scenario to ${found.profile.city} at AQI ${found.profile.aqi}.`);
   }
 
   function handleToggleAdopt(actionId: string) {
@@ -128,6 +130,7 @@ export default function App() {
     const next = saveLocationBaseline(profile.city, profile.aqi);
     setSavedBaseline(next);
     setAlerts([]);
+    setLiveAnnouncement(`Saved ${next.city} baseline at ${next.baselineAqi} AQI.`);
   }
 
   async function handleCheckLiveAqi() {
@@ -175,6 +178,7 @@ export default function App() {
     setProfile(nextProfile);
     setPlanError(null);
     setCustomizerOpen(false);
+    setLiveAnnouncement(`Updated profile locally for ${nextProfile.city} at AQI ${nextProfile.aqi}.`);
   }
 
   async function handleGenerateCustomPlan(nextProfile: HouseholdProfile) {
@@ -182,44 +186,18 @@ export default function App() {
     setPlanError(null);
 
     try {
-      const response = await fetch('/api/plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(nextProfile),
-      });
-
-      const contentType = response.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        throw new Error(
-          'Live Gemini AI backend is unavailable on static hosting (such as GitHub Pages). Click "Apply Locally" to update the EPA exposure and 12-week models with your profile, or run the Express server with GEMINI_API_KEY.',
-        );
-      }
-
-      const data = (await response.json()) as Partial<GeneratedPlanPayload> & { error?: string };
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate tailored plan.');
-      }
-
-      if (!Array.isArray(data.actions) || data.actions.length === 0) {
-        throw new Error('Assistant returned an empty action list. Please try again.');
-      }
-
+      const data = await requestTailoredPlan(nextProfile);
       setActivePresetId(null);
       setProfile(nextProfile);
       setActions(data.actions);
       setAdoptedIds(data.actions.slice(0, 3).map((item) => item.id));
-      setBestVentilationWindow(
-        data.bestVentilationWindow || '1:30 PM – 3:30 PM (peak afternoon dispersion)',
-      );
-      setImpactNarrative(
-        data.impactNarrative ||
-          `Tailored plan for ${nextProfile.city} at AQI ${nextProfile.aqi}.`,
-      );
+      setBestVentilationWindow(data.bestVentilationWindow);
+      setImpactNarrative(data.impactNarrative);
       setStatusFilter('all');
       setSearchQuery('');
       setMessages([]);
       setCustomizerOpen(false);
+      setLiveAnnouncement(`Generated custom ClearWinter plan for ${nextProfile.city}.`);
     } catch (err) {
       setPlanError(err instanceof Error ? err.message : 'Unable to connect to server.');
     } finally {
@@ -234,6 +212,17 @@ export default function App() {
   return (
     <MotionConfig reducedMotion="user">
       <div className="min-h-screen flex bg-[#f4f6f9] text-slate-900">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-lg focus:bg-teal-700 focus:px-4 focus:py-2 focus:text-xs focus:font-medium focus:text-white focus:outline-2 focus:outline-offset-2 focus:outline-teal-900"
+        >
+          Skip to main content
+        </a>
+
+        <div role="status" aria-live="polite" className="sr-only">
+          {liveAnnouncement}
+        </div>
+
         <Sidebar
           activeTab={activeTab}
           onSelectTab={setActiveTab}
@@ -274,7 +263,7 @@ export default function App() {
             isGenerating={isGeneratingPlan}
           />
 
-          <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6">
+          <main id="main-content" tabIndex={-1} className="flex-1 px-4 sm:px-6 lg:px-8 py-6 focus:outline-none">
             <div className="max-w-6xl mx-auto space-y-6">
               <div
                 className={`flex items-start gap-3 rounded-2xl border p-4 text-xs sm:text-sm transition-colors duration-150 ${aqiBand.surfaceClass} ${aqiBand.borderColorClass}`}

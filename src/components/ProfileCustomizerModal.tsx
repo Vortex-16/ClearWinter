@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { AlertCircle, X } from 'lucide-react';
 import { validateProfileInput } from '../utils/airImpact';
@@ -65,11 +65,19 @@ export function ProfileCustomizerModal({
 }: ProfileCustomizerModalProps) {
   const [formState, setFormState] = useState<HouseholdProfile>(initialProfile);
   const [errors, setErrors] = useState<ProfileValidationErrors>({});
+  const cityInputRef = useRef<HTMLInputElement | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
+    previousFocusRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setFormState(initialProfile);
     setErrors({});
+
+    const focusTimer = window.setTimeout(() => {
+      cityInputRef.current?.focus();
+    }, 20);
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -77,7 +85,11 @@ export function ProfileCustomizerModal({
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.clearTimeout(focusTimer);
+      window.removeEventListener('keydown', handleKeyDown);
+      previousFocusRef.current?.focus();
+    };
   }, [open, initialProfile, onClose]);
 
   function togglePriority(priority: string) {
@@ -119,6 +131,11 @@ export function ProfileCustomizerModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.16 }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              onClose();
+            }
+          }}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/55 backdrop-blur-[1px]"
           role="dialog"
           aria-modal="true"
@@ -170,6 +187,7 @@ export function ProfileCustomizerModal({
                 City or Neighborhood
               </label>
               <input
+                ref={cityInputRef}
                 id="profile-city"
                 type="text"
                 value={formState.city}

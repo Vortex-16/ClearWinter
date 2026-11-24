@@ -6,6 +6,7 @@ import {
   classifyAqiBand,
   estimatePm25FromAqi,
   filterActions,
+  getBaselineInfiltrationFactor,
   validateProfileInput,
 } from '../utils/airImpact';
 import type { AirAction, HouseholdProfile, ImpactSummary } from '../types/air';
@@ -136,6 +137,8 @@ describe('src/utils/airImpact unit tests', () => {
 
   describe('calculateImpactSummary', () => {
     it('returns baseline infiltration values when no actions are adopted', () => {
+      expect(getBaselineInfiltrationFactor('Modern sealed apartment')).toBe(0.52);
+      expect(getBaselineInfiltrationFactor('Historic brick tenement flat')).toBe(0.68);
       const summary = calculateImpactSummary(SAMPLE_ACTIONS, [], BASE_PROFILE);
 
       expect(summary.adoptedCount).toBe(0);
