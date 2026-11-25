@@ -8,11 +8,7 @@ interface AlertToastStackProps {
   onApplyLiveAqi: (alert: AqiAlertToast) => void;
 }
 
-export function AlertToastStack({
-  alerts,
-  onDismiss,
-  onApplyLiveAqi,
-}: AlertToastStackProps) {
+export function AlertToastStack({ alerts, onDismiss, onApplyLiveAqi }: AlertToastStackProps) {
   if (alerts.length === 0) {
     return null;
   }
@@ -46,9 +42,7 @@ export function AlertToastStack({
                   <div className="text-xs font-semibold text-red-800">
                     Air Quality Alert · {alert.currentSeverity}
                   </div>
-                  <div className="text-sm font-semibold text-slate-900 truncate">
-                    {alert.city}
-                  </div>
+                  <div className="text-sm font-semibold text-slate-900 truncate">{alert.city}</div>
                 </div>
               </div>
 

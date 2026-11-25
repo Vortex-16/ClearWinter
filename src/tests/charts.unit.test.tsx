@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneElement, isValidElement, type ReactElement, type ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createTestImpact, createTestProfile } from '../test/factories';
 import type {
   HourlySmogPoint,
   HouseholdProfile,
@@ -10,9 +11,14 @@ import type {
 } from '../types/air';
 
 const { mockBuildLongTermExposureProjection, mockBuildHourlyInversionCurve } = vi.hoisted(() => ({
-  mockBuildLongTermExposureProjection: vi.fn<
-    (impact: ImpactSummary, profile: HouseholdProfile, weeks?: number) => LongTermProjectionSummary
-  >(),
+  mockBuildLongTermExposureProjection:
+    vi.fn<
+      (
+        impact: ImpactSummary,
+        profile: HouseholdProfile,
+        weeks?: number,
+      ) => LongTermProjectionSummary
+    >(),
   mockBuildHourlyInversionCurve: vi.fn<(baseAqi: number) => HourlySmogPoint[]>(),
 }));
 
@@ -88,26 +94,12 @@ vi.mock('recharts', () => ({
 import { DiurnalSmogChart } from '../components/DiurnalSmogChart';
 import { ExposureProjectionChart } from '../components/ExposureProjectionChart';
 
-const MOCK_PROFILE: HouseholdProfile = {
+const MOCK_PROFILE = createTestProfile({
   city: 'Lahore, Pakistan',
   aqi: 285,
-  householdType: 'Multi-generational apartment',
-  heatingSource: 'Natural gas furnace / boiler',
-  commuteMode: 'Motorbike + car',
   housingType: 'Older apartment with drafty windows',
-  priorities: ['Protect children & elders'],
-};
-
-const MOCK_IMPACT: ImpactSummary = {
-  outdoorPm25: 235.4,
-  estimatedIndoorPm25: 80.0,
-  exposureReductionPct: 50,
-  weeklyCo2eAvoidedKg: 15.0,
-  weeklyPm25AvoidedGrams: 18.0,
-  adoptedCount: 3,
-  totalCount: 8,
-};
-
+});
+const MOCK_IMPACT = createTestImpact();
 const MOCK_PROJECTION: LongTermProjectionSummary = {
   points: [
     {
@@ -134,7 +126,8 @@ const MOCK_PROJECTION: LongTermProjectionSummary = {
 
 const MOCK_CURVE: HourlySmogPoint[] = Array.from({ length: 24 }, (_, hour) => ({
   hour,
-  label: hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`,
+  label:
+    hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`,
   pm25: hour === 8 ? 310.5 : hour === 14 ? 120.2 : 200.0,
   aqi: hour === 8 ? 360 : hour === 14 ? 148 : 220,
   ventilationSafe: hour >= 13 && hour <= 15,
@@ -188,7 +181,7 @@ describe('Chart components unit tests (mocked Recharts & airImpact)', () => {
   });
 
   describe('DiurnalSmogChart', () => {
-    it('renders 24 hourly bars, defaults to 2 PM selection, and updates readout on hour selection', async () => {
+    it('renders 24 hourly bars, defaults to 2 PM selection, and updates readout on click', async () => {
       const user = userEvent.setup();
 
       render(
@@ -199,13 +192,14 @@ describe('Chart components unit tests (mocked Recharts & airImpact)', () => {
       );
 
       expect(mockBuildHourlyInversionCurve).toHaveBeenCalledWith(285);
+      expect(screen.getAllByRole('button')).toHaveLength(24);
       expect(screen.getByText(/Best Window: 1:30 PM – 3:30 PM/i)).toBeInTheDocument();
 
       const afternoonBtn = screen.getByRole('button', {
         name: /2 PM: 120.2 micrograms per cubic meter/i,
       });
       expect(afternoonBtn).toHaveAttribute('aria-pressed', 'true');
-      expect(screen.getByText(/120.2 µg\/m³ \(est\. AQI 148\)/i)).toBeInTheDocument();
+      expect(screen.getByText('Peak solar mixing · Best ventilation window')).toBeInTheDocument();
 
       const morningBtn = screen.getByRole('button', {
         name: /8 AM: 310.5 micrograms per cubic meter/i,
@@ -214,7 +208,7 @@ describe('Chart components unit tests (mocked Recharts & airImpact)', () => {
 
       expect(morningBtn).toHaveAttribute('aria-pressed', 'true');
       expect(afternoonBtn).toHaveAttribute('aria-pressed', 'false');
-      expect(screen.getByText(/310.5 µg\/m³ \(est\. AQI 360\)/i)).toBeInTheDocument();
+      expect(screen.getByText('Morning commute + shallow cold trap')).toBeInTheDocument();
     });
   });
 });

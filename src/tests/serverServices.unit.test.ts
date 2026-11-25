@@ -52,7 +52,9 @@ describe('server/geminiService and server/aqiFeedService unit tests', () => {
       await expect(withRetry(transientFn, 2, 1)).resolves.toBe('recovered');
       expect(transientFn).toHaveBeenCalledTimes(2);
 
-      const fatalFn = vi.fn<() => Promise<string>>().mockRejectedValue(new Error('400 Bad Request'));
+      const fatalFn = vi
+        .fn<() => Promise<string>>()
+        .mockRejectedValue(new Error('400 Bad Request'));
       await expect(withRetry(fatalFn, 2, 1)).rejects.toThrow('400 Bad Request');
       expect(fatalFn).toHaveBeenCalledTimes(1);
     });
@@ -188,9 +190,12 @@ describe('server/geminiService and server/aqiFeedService unit tests', () => {
       const mockFetch = vi.fn<typeof fetch>().mockImplementation(async (input) => {
         const url = String(input);
         if (url.includes('geocoding-api')) {
-          return new Response(JSON.stringify({ results: [{ latitude: 50.06, longitude: 19.94 }] }), {
-            status: 200,
-          });
+          return new Response(
+            JSON.stringify({ results: [{ latitude: 50.06, longitude: 19.94 }] }),
+            {
+              status: 200,
+            },
+          );
         }
         return new Response(JSON.stringify({ current: { us_aqi: 194.2, pm2_5: 138.44 } }), {
           status: 200,
@@ -198,7 +203,12 @@ describe('server/geminiService and server/aqiFeedService unit tests', () => {
       });
 
       const ok = await fetchLiveOpenMeteoAqi('Krakow, Poland', mockFetch);
-      expect(ok).toMatchObject({ city: 'Krakow, Poland', aqi: 194, pm25: 138.4, source: 'open-meteo' });
+      expect(ok).toMatchObject({
+        city: 'Krakow, Poland',
+        aqi: 194,
+        pm25: 138.4,
+        source: 'open-meteo',
+      });
 
       const failingFetch = vi.fn<typeof fetch>().mockRejectedValue(new Error('timeout'));
       expect(await fetchLiveOpenMeteoAqi('Krakow', failingFetch)).toBeNull();

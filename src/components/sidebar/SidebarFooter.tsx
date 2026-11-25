@@ -69,11 +69,7 @@ export function SidebarFooter({
           onClick={onCheckLiveAqi}
           disabled={isCheckingLive}
           aria-label={
-            isCompact
-              ? isCheckingLive
-                ? 'Checking Live AQI...'
-                : 'Check Live AQI'
-              : undefined
+            isCompact ? (isCheckingLive ? 'Checking Live AQI...' : 'Check Live AQI') : undefined
           }
           title={isCompact ? 'Check Live AQI' : undefined}
           className={`w-full flex items-center justify-center gap-2 rounded-lg border border-slate-800 bg-slate-900 text-xs font-medium text-slate-200 hover:bg-slate-800 hover:border-slate-700 hover:text-white active:scale-[0.98] disabled:opacity-60 transition-all duration-150 focus-visible:outline-2 focus-visible:outline-teal-400 whitespace-nowrap ${
@@ -84,9 +80,7 @@ export function SidebarFooter({
             className={`h-3.5 w-3.5 shrink-0 text-teal-400 ${isCheckingLive ? 'animate-spin' : ''}`}
             aria-hidden="true"
           />
-          {!isCompact && (
-            <span>{isCheckingLive ? 'Checking Live AQI...' : 'Check Live AQI'}</span>
-          )}
+          {!isCompact && <span>{isCheckingLive ? 'Checking Live AQI...' : 'Check Live AQI'}</span>}
         </button>
 
         <button

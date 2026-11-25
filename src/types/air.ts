@@ -5,12 +5,7 @@ export type WorkspaceTab = ActionCategory | 'assistant';
 export type AdoptionFilter = 'all' | 'adopted' | 'pending';
 
 export type AqiSeverity =
-  | 'Good'
-  | 'Moderate'
-  | 'Sensitive'
-  | 'Unhealthy'
-  | 'Very Unhealthy'
-  | 'Hazardous';
+  'Good' | 'Moderate' | 'Sensitive' | 'Unhealthy' | 'Very Unhealthy' | 'Hazardous';
 
 export type CostTier = 'Zero cost' | 'Low cost' | 'Shared investment';
 
@@ -142,5 +137,3 @@ export interface LongTermProjectionSummary {
   seasonalCo2eAvoidedKg: number;
   seasonalPm25PreventedGrams: number;
 }
-
-

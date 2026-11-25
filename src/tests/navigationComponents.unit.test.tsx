@@ -2,13 +2,13 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type {
-  AqiAlertToast,
-  AqiClassification,
-  HouseholdProfile,
-  RegionalPreset,
-  SavedLocationBaseline,
-} from '../types/air';
+import {
+  createAqiBandStub,
+  createTestAlert,
+  createTestBaseline,
+  createTestProfile,
+} from '../test/factories';
+import type { AqiClassification, RegionalPreset } from '../types/air';
 
 const { mockClassifyAqiBand } = vi.hoisted(() => ({
   mockClassifyAqiBand: vi.fn<(aqi: number) => AqiClassification>(),
@@ -18,30 +18,29 @@ vi.mock('../utils/airImpact', () => ({
   classifyAqiBand: mockClassifyAqiBand,
 }));
 
+const MOTION_ONLY_KEYS = new Set([
+  'initial',
+  'animate',
+  'exit',
+  'transition',
+  'layout',
+  'layoutId',
+]);
+
+function omitMotionProps(props: Record<string, unknown>) {
+  return Object.fromEntries(Object.entries(props).filter(([k]) => !MOTION_ONLY_KEYS.has(k)));
+}
+
 vi.mock('motion/react', () => ({
   AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
   MotionConfig: ({ children }: { children?: ReactNode }) => <>{children}</>,
   motion: {
-    div: ({
-      children,
-      initial: _i,
-      animate: _a,
-      exit: _e,
-      transition: _t,
-      layout: _l,
-      layoutId: _lid,
-      ...rest
-    }: Record<string, unknown> & { children?: ReactNode }) => <div {...rest}>{children}</div>,
-    span: ({
-      children,
-      initial: _i,
-      animate: _a,
-      exit: _e,
-      transition: _t,
-      layout: _l,
-      layoutId: _lid,
-      ...rest
-    }: Record<string, unknown> & { children?: ReactNode }) => <span {...rest}>{children}</span>,
+    div: ({ children, ...rest }: Record<string, unknown> & { children?: ReactNode }) => (
+      <div {...omitMotionProps(rest)}>{children}</div>
+    ),
+    span: ({ children, ...rest }: Record<string, unknown> & { children?: ReactNode }) => (
+      <span {...omitMotionProps(rest)}>{children}</span>
+    ),
   },
 }));
 
@@ -73,22 +72,8 @@ import { AlertToastStack } from '../components/AlertToastStack';
 import { Sidebar } from '../components/Sidebar';
 import { TopBar } from '../components/TopBar';
 
-const MOCK_PROFILE: HouseholdProfile = {
-  city: 'Delhi NCR, India',
-  aqi: 312,
-  householdType: 'Family with young children & elders',
-  heatingSource: 'Portable electric room heaters',
-  commuteMode: 'Metro + short car school drop-off',
-  housingType: 'Older apartment with drafty windows',
-  priorities: ['Protect children & elders'],
-};
-
-const MOCK_BASELINE: SavedLocationBaseline = {
-  city: 'delhi ncr, india',
-  baselineAqi: 312,
-  savedAt: '2026-11-19T10:00:00.000Z',
-};
-
+const MOCK_PROFILE = createTestProfile();
+const MOCK_BASELINE = createTestBaseline({ city: 'delhi ncr, india' });
 const MOCK_PRESETS: RegionalPreset[] = [
   {
     id: 'delhi',
@@ -104,7 +89,7 @@ const MOCK_PRESETS: RegionalPreset[] = [
     id: 'krakow',
     label: 'Kraków',
     seasonNote: 'Dec valley fog',
-    profile: { ...MOCK_PROFILE, city: 'Kraków, Poland', aqi: 194 },
+    profile: createTestProfile({ city: 'Kraków, Poland', aqi: 194 }),
     bestVentilationWindow: '1:00 PM – 3:00 PM',
     impactNarrative: 'Narrative',
     actions: [],
@@ -112,21 +97,14 @@ const MOCK_PRESETS: RegionalPreset[] = [
   },
 ];
 
-describe('Navigation and Alert components unit tests (all dependencies mocked)', () => {
+describe('Navigation and Alert components unit tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockClassifyAqiBand.mockReturnValue({
-      severity: 'Hazardous',
-      advisory: 'Mocked advisory',
-      textColorClass: 'text-red-900',
-      surfaceClass: 'bg-red-100',
-      borderColorClass: 'border-red-300',
-      dotColorClass: 'bg-red-800',
-    });
+    mockClassifyAqiBand.mockImplementation((aqi) => createAqiBandStub(aqi));
   });
 
   describe('TopBar', () => {
-    it('renders tab title, mocked AQI severity, and dispatches mobile, collapse, and customizer callbacks', async () => {
+    it('renders tab title, AQI severity, and dispatches mobile, collapse, and customizer callbacks', async () => {
       const user = userEvent.setup();
       const onOpenCustomizer = vi.fn();
       const onOpenMobileMenu = vi.fn();
@@ -173,9 +151,10 @@ describe('Navigation and Alert components unit tests (all dependencies mocked)',
       );
 
       expect(screen.getByRole('heading', { name: 'Ask Assistant' })).toBeInTheDocument();
-      expect(
-        screen.getByRole('button', { name: 'Expand navigation sidebar' }),
-      ).toHaveAttribute('aria-expanded', 'false');
+      expect(screen.getByRole('button', { name: 'Expand navigation sidebar' })).toHaveAttribute(
+        'aria-expanded',
+        'false',
+      );
       expect(screen.getByRole('button', { name: /Tailoring Plan/i })).toBeDisabled();
     });
   });
@@ -236,7 +215,6 @@ describe('Navigation and Alert components unit tests (all dependencies mocked)',
       await user.click(screen.getByRole('button', { name: 'Collapse sidebar' }));
       expect(onToggleCollapsed).toHaveBeenCalledTimes(1);
 
-      // Switch to collapsed icon rail + different profile AQI + checking live state
       rerender(
         <Sidebar
           activeTab="routine"
@@ -265,7 +243,6 @@ describe('Navigation and Alert components unit tests (all dependencies mocked)',
       await user.click(screen.getByRole('button', { name: 'Kraków (194 AQI)' }));
       expect(onSelectPreset).toHaveBeenCalledWith('krakow');
 
-      // Open mobile drawer
       rerender(
         <Sidebar
           activeTab="routine"
@@ -288,8 +265,7 @@ describe('Navigation and Alert components unit tests (all dependencies mocked)',
       );
 
       const dialog = screen.getByRole('dialog', { name: 'Workspace navigation menu' });
-      const closeBtn = within(dialog).getByRole('button', { name: 'Close navigation menu' });
-      await user.click(closeBtn);
+      await user.click(within(dialog).getByRole('button', { name: 'Close navigation menu' }));
       expect(onCloseMobile).toHaveBeenCalled();
     });
   });
@@ -299,20 +275,7 @@ describe('Navigation and Alert components unit tests (all dependencies mocked)',
       const user = userEvent.setup();
       const onDismiss = vi.fn();
       const onApplyLiveAqi = vi.fn();
-
-      const alert: AqiAlertToast = {
-        id: 'alert-1',
-        city: 'Delhi NCR, India',
-        baselineAqi: 312,
-        baselineSeverity: 'Hazardous',
-        currentAqi: 378,
-        currentSeverity: 'Hazardous',
-        delta: 66,
-        pm25: 328.4,
-        reason: 'Local AQI climbed +66 points.',
-        source: 'station-feed',
-        timestamp: '2026-11-19T12:00:00.000Z',
-      };
+      const alert = createTestAlert({ id: 'alert-1', currentAqi: 378, delta: 66, pm25: 328.4 });
 
       const { container, rerender } = render(
         <AlertToastStack alerts={[]} onDismiss={onDismiss} onApplyLiveAqi={onApplyLiveAqi} />,
@@ -320,11 +283,7 @@ describe('Navigation and Alert components unit tests (all dependencies mocked)',
       expect(container).toBeEmptyDOMElement();
 
       rerender(
-        <AlertToastStack
-          alerts={[alert]}
-          onDismiss={onDismiss}
-          onApplyLiveAqi={onApplyLiveAqi}
-        />,
+        <AlertToastStack alerts={[alert]} onDismiss={onDismiss} onApplyLiveAqi={onApplyLiveAqi} />,
       );
 
       expect(screen.getByRole('alert')).toHaveTextContent('378 AQI');
@@ -333,7 +292,9 @@ describe('Navigation and Alert components unit tests (all dependencies mocked)',
       await user.click(screen.getByRole('button', { name: 'Apply 378 AQI' }));
       expect(onApplyLiveAqi).toHaveBeenCalledWith(alert);
 
-      await user.click(screen.getByRole('button', { name: 'Dismiss AQI alert for Delhi NCR, India' }));
+      await user.click(
+        screen.getByRole('button', { name: 'Dismiss AQI alert for Delhi NCR, India' }),
+      );
       expect(onDismiss).toHaveBeenCalledWith('alert-1');
     });
   });

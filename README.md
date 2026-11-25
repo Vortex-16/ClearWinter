@@ -9,6 +9,7 @@ ClearWinter is a full-stack GenAI-powered assistant built to help families and n
 **Urban Civic & Family Environmental Health (Winter Smog & Thermal Inversion Resilience)**
 
 Winter air pollution behaves fundamentally differently from summer ozone or wildfire smoke:
+
 - Cold nocturnal air traps vehicle tailpipe exhaust, solid-fuel heating smoke, and industrial emissions inside a shallow atmospheric boundary layer near street level.
 - Unvented indoor cooking and space heating inside sealed winter homes frequently create indoor PM2.5 and NO2 peaks worse than outdoor street air.
 - Families need actionable, low-cost guidance synchronized to **time of day** (when solar mixing briefly opens safe ventilation windows), **home envelope & heating type**, and **commute patterns**, paired with transparent cause-and-effect math.
@@ -20,6 +21,7 @@ Winter air pollution behaves fundamentally differently from summer ozone or wild
 ClearWinter uses a **hybrid architecture**: deterministic environmental health modeling handles quantitative exposure math, AQI severity classification, and real-time alert evaluation, while **Gemini (`gemini-4-hydrogen`)** generates context-aware plans and answers follow-up questions via strict structured JSON schemas.
 
 ### A. Context-Driven Decision Making
+
 1. **Location & AQI Severity Mapping (`classifyAqiBand`, `estimatePm25FromAqi`)**:
    - Maps any AQI (`1–500`) across US EPA breakpoints to ambient PM2.5 concentration (`µg/m³`), severity tier (`Good` through `Hazardous`), and tailored health advisories.
 2. **24-Hour Thermal Inversion Modeling (`buildHourlyInversionCurve`)**:
@@ -33,6 +35,7 @@ ClearWinter uses a **hybrid architecture**: deterministic environmental health m
    - Fires an alert toast when either the AQI severity tier escalates (e.g., `Unhealthy` → `Very Unhealthy`) or local AQI spikes by `≥ 15` points above baseline, with idempotent deduplication to prevent repeat notifications.
 
 ### B. GenAI Reasoning (`gemini-4-hydrogen`)
+
 - **Tailored Action Plans (`POST /api/plan`)**: Sends city, AQI, household profile, heating source, commute mode, housing envelope, and priorities to Gemini with a strict `responseSchema`, returning 10 actions across `routine`, `indoor`, and `community` categories—each explicitly articulating **Direct Personal Impact**, **Direct Community Impact**, and **Scientific Mechanism**.
 - **Grounded Household Q&A (`POST /api/ask`)**: Maintains conversational context grounded in the active location, AQI, and already-adopted habits, returning a concise recommendation alongside one-line Personal and Community takeaways.
 
@@ -66,6 +69,7 @@ ClearWinter uses a **hybrid architecture**: deterministic environmental health m
 ```
 
 ### Getting Started (Full-Stack Local / Cloud Run)
+
 1. **Configure Secrets**: Set `GEMINI_API_KEY` in `.env` (or AI Studio **Settings > Secrets**). Never expose API keys to client code.
 2. **Install & Run**:
    ```bash
@@ -81,7 +85,9 @@ ClearWinter uses a **hybrid architecture**: deterministic environmental health m
    ```
 
 ### GitHub Pages Deployment (`main` branch)
+
 Because ClearWinter uses Vite, React 19, and TypeScript, browsers cannot execute raw uncompiled `/src/main.tsx` directly from the `main` branch root. Everything GitHub Pages requires is already configured in the repository:
+
 - `.github/workflows/deploy-pages.yml`: Automatically triggers on every push to `main`, installs dependencies (`npm ci` when `package-lock.json` is present or `npm install` otherwise), runs `npm run lint`, `npm test`, and `npm run build`, uploads `./dist`, and deploys via `actions/deploy-pages@v4`.
 - `.github/workflows/ci.yml`: Runs lint, full test suite, and build checks on pushes and pull requests to `main`.
 - `vite.config.ts` & `public/.nojekyll`: Configures relative asset paths (`base: './'`) so subpath hosting (`https://<user>.github.io/<repo>/`) resolves assets cleanly, disables Jekyll underscore filtering (`.nojekyll`), and copies `index.html` to `404.html` for SPA routing.
@@ -117,20 +123,19 @@ Because ClearWinter uses Vite, React 19, and TypeScript, browsers cannot execute
 
 All **54 automated tests across 13 test files** validate every layer using **Vitest**, **React Testing Library**, and **axe-core**:
 
-| Test Suite | Tests | Scope Covered |
-| --- | ---: | --- |
-| `src/utils/airImpact.test.ts` | 11 | EPA AQI breakpoints & clamping, PM2.5 conversion, 24h inversion curve, multiplicative 82% cap, modern vs. older infiltration, 12-week ramp projection, search/status filtering, profile validation |
-| `src/utils/aqiAlertRules.test.ts` | 6 | City normalization, severity-tier jump alerts, `>=15` spike alerts, idempotent deduplication, unrelated-city/out-of-range isolation, corrupt `localStorage` & quota recovery |
-| `src/data/presets.test.ts` | 1 | Preset schema integrity, unique preset/action IDs, valid `defaultAdoptedIds`, balanced categories, strict no-emoji enforcement |
-| `server/security.test.ts` | 5 | Control-character stripping, `/api/plan` & `/api/ask` & `/api/aqi-report` payload sanitization, per-IP rate limiting, window reset, and bounded key cache eviction |
-| `src/services/aqiAlertService.test.ts` | 5 | `localStorage` baseline persistence, `/api/health` JSON detection, Open-Meteo geocoding & AQI normalization, static GitHub Pages 404 fallback, live worsening subscription alerts |
-| `src/components/ActionWorkspace.test.tsx` | 4 | Category views, Personal/Community impact rendering, adopt toggle clicks, filter/search callbacks, empty-state Reset Filters, accessible loading skeletons |
-| `src/components/DiurnalSmogChart.test.tsx` | 2 | 24 hourly bar buttons, default 2 PM midday window selection, interactive click switching to morning rush-hour cold trap readout |
-| `src/components/ImpactStrip.test.tsx` | 2 | Live exposure/CO2e/PM2.5 metrics, Recharts 12-week exposure projection rendering, zero-adoption banner state |
-| `src/components/ProfileCustomizerModal.test.tsx` | 3 | Closed mount behavior, empty city & out-of-range AQI validation, priority checkboxes, **Apply Locally** & **Generate Tailored Plan** callbacks, `Escape` dismissal, server alert display |
-| `src/components/AskAssistantView.test.tsx` | 3 | Empty-submit validation, `/api/ask` submission & takeaway message propagation, static-host HTML 404 friendly error alert |
-| `src/components/NavigationAndAlerts.test.tsx` | 3 | `TopBar` title/CTA, `Sidebar` tab/preset/conditional baseline-save/live-check interactions, `AlertToastStack` dismiss & apply buttons |
-| `src/App.test.tsx` | 3 | End-to-end `<App />` RTL flows: preset switching, habit adoption metric updates, live AQI worsening toast -> Apply flow, tab navigation, custom profile local apply, zero emojis/gradients |
-| `src/tests/accessibility.test.ts` | 6 | Automated `axe-core` WCAG/ARIA audits across `App`, `TopBar`, `Sidebar` (desktop + mobile drawer), `ImpactStrip`, `DiurnalSmogChart`, `ActionWorkspace` (populated/empty/loading), `AskAssistantView`, `ProfileCustomizerModal`, and `AlertToastStack` |
-| **Total** | **54** | **54 passed, 0 failed** |
-
+| Test Suite                                       |  Tests | Scope Covered                                                                                                                                                                                                                                          |
+| ------------------------------------------------ | -----: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/utils/airImpact.test.ts`                    |     11 | EPA AQI breakpoints & clamping, PM2.5 conversion, 24h inversion curve, multiplicative 82% cap, modern vs. older infiltration, 12-week ramp projection, search/status filtering, profile validation                                                     |
+| `src/utils/aqiAlertRules.test.ts`                |      6 | City normalization, severity-tier jump alerts, `>=15` spike alerts, idempotent deduplication, unrelated-city/out-of-range isolation, corrupt `localStorage` & quota recovery                                                                           |
+| `src/data/presets.test.ts`                       |      1 | Preset schema integrity, unique preset/action IDs, valid `defaultAdoptedIds`, balanced categories, strict no-emoji enforcement                                                                                                                         |
+| `server/security.test.ts`                        |      5 | Control-character stripping, `/api/plan` & `/api/ask` & `/api/aqi-report` payload sanitization, per-IP rate limiting, window reset, and bounded key cache eviction                                                                                     |
+| `src/services/aqiAlertService.test.ts`           |      5 | `localStorage` baseline persistence, `/api/health` JSON detection, Open-Meteo geocoding & AQI normalization, static GitHub Pages 404 fallback, live worsening subscription alerts                                                                      |
+| `src/components/ActionWorkspace.test.tsx`        |      4 | Category views, Personal/Community impact rendering, adopt toggle clicks, filter/search callbacks, empty-state Reset Filters, accessible loading skeletons                                                                                             |
+| `src/components/DiurnalSmogChart.test.tsx`       |      2 | 24 hourly bar buttons, default 2 PM midday window selection, interactive click switching to morning rush-hour cold trap readout                                                                                                                        |
+| `src/components/ImpactStrip.test.tsx`            |      2 | Live exposure/CO2e/PM2.5 metrics, Recharts 12-week exposure projection rendering, zero-adoption banner state                                                                                                                                           |
+| `src/components/ProfileCustomizerModal.test.tsx` |      3 | Closed mount behavior, empty city & out-of-range AQI validation, priority checkboxes, **Apply Locally** & **Generate Tailored Plan** callbacks, `Escape` dismissal, server alert display                                                               |
+| `src/components/AskAssistantView.test.tsx`       |      3 | Empty-submit validation, `/api/ask` submission & takeaway message propagation, static-host HTML 404 friendly error alert                                                                                                                               |
+| `src/components/NavigationAndAlerts.test.tsx`    |      3 | `TopBar` title/CTA, `Sidebar` tab/preset/conditional baseline-save/live-check interactions, `AlertToastStack` dismiss & apply buttons                                                                                                                  |
+| `src/App.test.tsx`                               |      3 | End-to-end `<App />` RTL flows: preset switching, habit adoption metric updates, live AQI worsening toast -> Apply flow, tab navigation, custom profile local apply, zero emojis/gradients                                                             |
+| `src/tests/accessibility.test.ts`                |      6 | Automated `axe-core` WCAG/ARIA audits across `App`, `TopBar`, `Sidebar` (desktop + mobile drawer), `ImpactStrip`, `DiurnalSmogChart`, `ActionWorkspace` (populated/empty/loading), `AskAssistantView`, `ProfileCustomizerModal`, and `AlertToastStack` |
+| **Total**                                        | **54** | **54 passed, 0 failed**                                                                                                                                                                                                                                |

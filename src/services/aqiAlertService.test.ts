@@ -44,15 +44,15 @@ describe('aqiAlertService', () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
       const url = String(input);
       if (url.includes('geocoding-api.open-meteo.com')) {
-        return new Response(
-          JSON.stringify({ results: [{ latitude: 28.61, longitude: 77.21 }] }),
-          { status: 200, headers: { 'content-type': 'application/json' } },
-        );
+        return new Response(JSON.stringify({ results: [{ latitude: 28.61, longitude: 77.21 }] }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
       }
-      return new Response(
-        JSON.stringify({ current: { us_aqi: 274.4, pm2_5: 198.27 } }),
-        { status: 200, headers: { 'content-type': 'application/json' } },
-      );
+      return new Response(JSON.stringify({ current: { us_aqi: 274.4, pm2_5: 198.27 } }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
     });
 
     const reading = await fetchOpenMeteoDirect('Delhi NCR, India');
@@ -94,15 +94,15 @@ describe('aqiAlertService', () => {
         });
       }
       if (url.includes('geocoding-api.open-meteo.com')) {
-        return new Response(
-          JSON.stringify({ results: [{ latitude: 31.55, longitude: 74.34 }] }),
-          { status: 200, headers: { 'content-type': 'application/json' } },
-        );
+        return new Response(JSON.stringify({ results: [{ latitude: 31.55, longitude: 74.34 }] }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
       }
-      return new Response(
-        JSON.stringify({ current: { us_aqi: 291, pm2_5: 221.4 } }),
-        { status: 200, headers: { 'content-type': 'application/json' } },
-      );
+      return new Response(JSON.stringify({ current: { us_aqi: 291, pm2_5: 221.4 } }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
     });
 
     const fromFallback = await fetchLiveAqiReading('Lahore, Pakistan');
@@ -125,10 +125,10 @@ describe('aqiAlertService', () => {
           { status: 200, headers: { 'content-type': 'application/json' } },
         );
       }
-      return new Response(
-        JSON.stringify({ current: { us_aqi: 225, pm2_5: 175.4 } }),
-        { status: 200, headers: { 'content-type': 'application/json' } },
-      );
+      return new Response(JSON.stringify({ current: { us_aqi: 225, pm2_5: 175.4 } }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
     });
 
     const onAlert = vi.fn();

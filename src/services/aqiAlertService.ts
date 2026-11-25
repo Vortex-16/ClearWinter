@@ -3,11 +3,7 @@ import {
   loadSavedBaseline,
   persistSavedBaseline,
 } from '../utils/aqiAlertRules';
-import type {
-  AqiAlertToast,
-  AqiReadingEvent,
-  SavedLocationBaseline,
-} from '../types/air';
+import type { AqiAlertToast, AqiReadingEvent, SavedLocationBaseline } from '../types/air';
 
 function getBrowserStorage() {
   if (typeof window === 'undefined') return null;

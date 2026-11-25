@@ -1,7 +1,6 @@
 import { render } from '@testing-library/react';
-import axe from 'axe-core';
 import { createElement } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, it, vi } from 'vitest';
 import App from '../App';
 import { ActionWorkspace } from '../components/ActionWorkspace';
 import { AlertToastStack } from '../components/AlertToastStack';
@@ -12,48 +11,24 @@ import { ProfileCustomizerModal } from '../components/ProfileCustomizerModal';
 import { Sidebar } from '../components/Sidebar';
 import { TopBar } from '../components/TopBar';
 import { REGIONAL_PRESETS } from '../data/presets';
+import {
+  createTestAlert,
+  createTestBaseline,
+  mockStaticEndpoints,
+  runAxeAudit,
+} from '../test/factories';
 import { calculateImpactSummary } from '../utils/airImpact';
 
 const preset = REGIONAL_PRESETS[0];
 const impact = calculateImpactSummary(preset.actions, preset.defaultAdoptedIds, preset.profile);
-const baseline = {
+const baseline = createTestBaseline({
   city: preset.profile.city,
   baselineAqi: preset.profile.aqi,
-  savedAt: '2026-11-19T10:00:00.000Z',
-};
-
-async function runAxeAudit(container: HTMLElement): Promise<void> {
-  const results = await axe.run(container, {
-    rules: {
-      // jsdom does not render layout/canvas pixels needed for computed contrast checks
-      'color-contrast': { enabled: false },
-    },
-  });
-
-  if (results.violations.length > 0) {
-    const summary = results.violations
-      .map(
-        (v) =>
-          `[${v.id}] (${v.impact ?? 'unknown'}) ${v.help}: ${v.nodes
-            .map((n) => n.target.join(' '))
-            .join(', ')}`,
-      )
-      .join('\n');
-    throw new Error(`Accessibility violations detected:\n${summary}`);
-  }
-
-  expect(results.violations).toHaveLength(0);
-}
+});
 
 describe('Automated accessibility audits (axe-core)', () => {
   it('App root workspace passes axe-core audit with valid landmarks and heading structure', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response('<html>404</html>', {
-        status: 404,
-        headers: { 'content-type': 'text/html' },
-      }),
-    );
-
+    mockStaticEndpoints(312);
     const { container } = render(createElement(App));
     await runAxeAudit(container);
   });
@@ -221,21 +196,7 @@ describe('Automated accessibility audits (axe-core)', () => {
 
     const { container: toastContainer } = render(
       createElement(AlertToastStack, {
-        alerts: [
-          {
-            id: 'toast-365',
-            city: 'Delhi NCR, India',
-            baselineAqi: 312,
-            baselineSeverity: 'Hazardous',
-            currentAqi: 365,
-            currentSeverity: 'Hazardous',
-            delta: 53,
-            pm25: 315.4,
-            reason: 'Local AQI climbed +53 points beyond your saved 312 AQI baseline.',
-            source: 'station-feed',
-            timestamp: '2026-11-19T12:00:00.000Z',
-          },
-        ],
+        alerts: [createTestAlert()],
         onDismiss: vi.fn(),
         onApplyLiveAqi: vi.fn(),
       }),

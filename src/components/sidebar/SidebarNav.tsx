@@ -77,9 +77,7 @@ export function SidebarNav({
                 aria-hidden="true"
               />
               {!isCompact && (
-                <span className="truncate text-sm font-medium whitespace-nowrap">
-                  {item.label}
-                </span>
+                <span className="truncate text-sm font-medium whitespace-nowrap">{item.label}</span>
               )}
             </span>
             {!isCompact && count !== null && (

@@ -1,13 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { REGIONAL_PRESETS } from '../data/presets';
-import { calculateImpactSummary, classifyAqiBand } from '../utils/airImpact';
-import { evaluateAqiWorsening } from '../utils/aqiAlertRules';
-import {
-  fetchLiveAqiReading,
-  getSavedLocationBaseline,
-  saveLocationBaseline,
-  subscribeToAqiAlerts,
-} from '../services/aqiAlertService';
 import { requestTailoredPlan } from '../services/planApiService';
 import type {
   AdoptionFilter,
@@ -15,20 +7,18 @@ import type {
   AqiAlertToast,
   AssistantMessage,
   HouseholdProfile,
-  SavedLocationBaseline,
   WorkspaceTab,
 } from '../types/air';
+import { calculateImpactSummary, classifyAqiBand } from '../utils/airImpact';
+import { useAqiAlerts } from './useAqiAlerts';
 
 /**
  * Central application state controller coordinating regional presets, household profile
- * impact recalculations, SSE/Open-Meteo alert subscriptions, and custom Gemini plan flows.
+ * impact recalculations, live AQI alerts, and custom Gemini plan flows.
  */
 export function useClearWinterWorkspace() {
   const initialPreset = REGIONAL_PRESETS[0];
 
-  const [savedBaseline, setSavedBaseline] = useState<SavedLocationBaseline>(() =>
-    getSavedLocationBaseline(initialPreset.profile.city, initialPreset.profile.aqi),
-  );
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('routine');
   const [activePresetId, setActivePresetId] = useState<string | null>(initialPreset.id);
   const [profile, setProfile] = useState<HouseholdProfile>(initialPreset.profile);
@@ -46,26 +36,16 @@ export function useClearWinterWorkspace() {
   const [customizerOpen, setCustomizerOpen] = useState(false);
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
   const [planError, setPlanError] = useState<string | null>(null);
-
-  const [alerts, setAlerts] = useState<AqiAlertToast[]>([]);
-  const [isCheckingLive, setIsCheckingLive] = useState(false);
   const [liveAnnouncement, setLiveAnnouncement] = useState('');
 
-  useEffect(() => {
-    const unsubscribe = subscribeToAqiAlerts(savedBaseline, {
-      onAlert: (incomingAlert) => {
-        setAlerts((prev) => {
-          const alreadyVisible = prev.some(
-            (item) =>
-              item.city === incomingAlert.city && item.currentAqi === incomingAlert.currentAqi,
-          );
-          if (alreadyVisible) return prev;
-          return [incomingAlert, ...prev].slice(0, 3);
-        });
-      },
-    });
-    return unsubscribe;
-  }, [savedBaseline]);
+  const {
+    savedBaseline,
+    alerts,
+    isCheckingLive,
+    saveBaseline: saveAlertBaseline,
+    checkLiveAqi,
+    dismissAlert,
+  } = useAqiAlerts(initialPreset.profile, setLiveAnnouncement);
 
   const impact = useMemo(
     () => calculateImpactSummary(actions, adoptedIds, profile),
@@ -121,41 +101,7 @@ export function useClearWinterWorkspace() {
   }
 
   function saveBaseline() {
-    const next = saveLocationBaseline(profile.city, profile.aqi);
-    setSavedBaseline(next);
-    setAlerts([]);
-    setLiveAnnouncement(`Saved ${next.city} baseline at ${next.baselineAqi} AQI.`);
-  }
-
-  async function checkLiveAqi() {
-    setIsCheckingLive(true);
-    try {
-      const reading = await fetchLiveAqiReading(savedBaseline.city);
-      if (reading) {
-        const latestAlerted = alerts[0]?.currentAqi ?? null;
-        const alert = evaluateAqiWorsening({
-          baseline: savedBaseline,
-          reading,
-          lastAlertedAqi: latestAlerted,
-        });
-        if (alert) {
-          setAlerts((prev) => {
-            const exists = prev.some(
-              (item) => item.city === alert.city && item.currentAqi === alert.currentAqi,
-            );
-            return exists ? prev : [alert, ...prev].slice(0, 3);
-          });
-        }
-      }
-    } catch {
-      // Live station telemetry checks are advisory and never block workspace interaction
-    } finally {
-      setIsCheckingLive(false);
-    }
-  }
-
-  function dismissAlert(alertId: string) {
-    setAlerts((prev) => prev.filter((item) => item.id !== alertId));
+    saveAlertBaseline(profile.city, profile.aqi);
   }
 
   function applyLiveAqi(alert: AqiAlertToast) {
@@ -164,7 +110,7 @@ export function useClearWinterWorkspace() {
       city: alert.city,
       aqi: alert.currentAqi,
     }));
-    setAlerts((prev) => prev.filter((item) => item.id !== alert.id));
+    dismissAlert(alert.id);
   }
 
   function applyLocalProfile(nextProfile: HouseholdProfile) {
@@ -172,7 +118,9 @@ export function useClearWinterWorkspace() {
     setProfile(nextProfile);
     setPlanError(null);
     setCustomizerOpen(false);
-    setLiveAnnouncement(`Updated profile locally for ${nextProfile.city} at AQI ${nextProfile.aqi}.`);
+    setLiveAnnouncement(
+      `Updated profile locally for ${nextProfile.city} at AQI ${nextProfile.aqi}.`,
+    );
   }
 
   async function generateCustomPlan(nextProfile: HouseholdProfile) {

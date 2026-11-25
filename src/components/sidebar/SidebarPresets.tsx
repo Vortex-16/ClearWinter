@@ -32,9 +32,7 @@ export function SidebarPresets({
   return (
     <div className="border-t border-slate-800 pt-5">
       {!isCompact && (
-        <div className="px-2 pb-2 text-xs font-semibold text-slate-400">
-          Winter Smog Scenarios
-        </div>
+        <div className="px-2 pb-2 text-xs font-semibold text-slate-400">Winter Smog Scenarios</div>
       )}
       <div className="space-y-1">
         {presets.map((preset) => {

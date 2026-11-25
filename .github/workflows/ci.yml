@@ -31,7 +31,10 @@ jobs:
             npm install --no-audit --no-fund --legacy-peer-deps
           fi
 
-      - name: TypeScript typecheck
+      - name: Prettier format check
+        run: npm run format:check
+
+      - name: Strict TypeScript & ESLint check
         run: npm run lint
 
       - name: Run full test suite

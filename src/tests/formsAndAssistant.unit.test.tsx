@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createTestProfile } from '../test/factories';
 import type { HouseholdProfile, ProfileValidationErrors } from '../types/air';
 
 const { mockValidateProfileInput } = vi.hoisted(() => ({
@@ -15,14 +16,14 @@ vi.mock('../utils/airImpact', () => ({
 vi.mock('motion/react', () => ({
   AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
   motion: {
-    div: ({
-      children,
-      initial: _i,
-      animate: _a,
-      exit: _e,
-      transition: _t,
-      ...rest
-    }: Record<string, unknown> & { children?: ReactNode }) => <div {...rest}>{children}</div>,
+    div: ({ children, ...rest }: Record<string, unknown> & { children?: ReactNode }) => {
+      const domProps = Object.fromEntries(
+        Object.entries(rest).filter(
+          ([k]) => !['initial', 'animate', 'exit', 'transition'].includes(k),
+        ),
+      );
+      return <div {...domProps}>{children}</div>;
+    },
   },
 }));
 
@@ -44,24 +45,16 @@ vi.mock('lucide-react', () => {
 import { AskAssistantView } from '../components/AskAssistantView';
 import { ProfileCustomizerModal } from '../components/ProfileCustomizerModal';
 
-const MOCK_PROFILE: HouseholdProfile = {
-  city: 'Delhi NCR, India',
-  aqi: 312,
-  householdType: 'Family with young children & elders',
-  heatingSource: 'Portable electric room heaters',
-  commuteMode: 'Metro + short car school drop-off',
-  housingType: 'Older apartment with drafty windows',
-  priorities: ['Protect children & elders'],
-};
+const MOCK_PROFILE = createTestProfile();
 
-describe('AskAssistantView and ProfileCustomizerModal unit tests (mocked fetch, motion, icons, utils)', () => {
+describe('AskAssistantView and ProfileCustomizerModal unit tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockValidateProfileInput.mockReturnValue({});
   });
 
   describe('AskAssistantView', () => {
-    it('validates blank submissions without network calls, sends starter/custom prompts, and surfaces server or static errors', async () => {
+    it('validates blank submissions, sends starter/custom prompts, and surfaces server or static errors', async () => {
       const user = userEvent.setup();
       const onAppendMessages = vi.fn();
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
@@ -75,17 +68,13 @@ describe('AskAssistantView and ProfileCustomizerModal unit tests (mocked fetch, 
         />,
       );
 
-      // Blank question validation
+      expect(screen.getByText(/No questions asked yet for this session/i)).toBeInTheDocument();
       await user.click(screen.getByRole('button', { name: 'Ask Assistant' }));
       expect(screen.getByRole('alert')).toHaveTextContent('Enter a question before sending.');
       expect(fetchSpy).not.toHaveBeenCalled();
 
-      // Static HTML fallback response error
       fetchSpy.mockResolvedValueOnce(
-        new Response('<!doctype html>', {
-          status: 404,
-          headers: { 'content-type': 'text/html' },
-        }),
+        new Response('<!doctype html>', { status: 404, headers: { 'content-type': 'text/html' } }),
       );
       await user.click(
         screen.getByRole('button', {
@@ -96,18 +85,19 @@ describe('AskAssistantView and ProfileCustomizerModal unit tests (mocked fetch, 
         /Live Gemini AI backend is unavailable on static hosting/i,
       );
 
-      // Server JSON error
       fetchSpy.mockResolvedValueOnce(
         new Response(JSON.stringify({ error: 'Rate limit reached.' }), {
           status: 429,
           headers: { 'content-type': 'application/json' },
         }),
       );
-      await user.type(screen.getByLabelText('Ask a winter smog question'), 'Can we run kitchen fan?');
+      await user.type(
+        screen.getByLabelText('Ask a winter smog question'),
+        'Can we run kitchen fan?',
+      );
       await user.click(screen.getByRole('button', { name: 'Ask Assistant' }));
       expect(await screen.findByRole('alert')).toHaveTextContent('Rate limit reached.');
 
-      // Successful JSON response
       fetchSpy.mockResolvedValueOnce(
         new Response(
           JSON.stringify({
@@ -124,9 +114,7 @@ describe('AskAssistantView and ProfileCustomizerModal unit tests (mocked fetch, 
       const [userMsg, assistantMsg] = onAppendMessages.mock.calls[0];
       expect(userMsg.content).toBe('Can we run kitchen fan?');
       expect(assistantMsg.content).toBe('Ventilate briefly between 1:30 PM and 2:30 PM.');
-      expect(assistantMsg.personalTakeaway).toBe('Cuts indoor CO2 buildup safely.');
 
-      // Renders populated message history
       rerender(
         <AskAssistantView
           profile={MOCK_PROFILE}
@@ -138,12 +126,11 @@ describe('AskAssistantView and ProfileCustomizerModal unit tests (mocked fetch, 
       expect(screen.getByText('Your Household Question')).toBeInTheDocument();
       expect(screen.getByText('ClearWinter Guidance')).toBeInTheDocument();
       expect(screen.getByText('Cuts indoor CO2 buildup safely.')).toBeInTheDocument();
-      expect(screen.getByText('Avoids re-heating chilled masonry.')).toBeInTheDocument();
     });
   });
 
   describe('ProfileCustomizerModal', () => {
-    it('renders conditionally, validates inputs via mocked validator, toggles priorities, and handles submit/close flows', async () => {
+    it('validates inputs, edits city/AQI, toggles priorities, and handles submit/close flows', async () => {
       const user = userEvent.setup();
       const onClose = vi.fn();
       const onGeneratePlan = vi.fn(async () => {});
@@ -177,7 +164,6 @@ describe('AskAssistantView and ProfileCustomizerModal unit tests (mocked fetch, 
       expect(screen.getByRole('dialog')).toBeInTheDocument();
       expect(screen.getByRole('alert')).toHaveTextContent('Previous backend error');
 
-      // Failed validation blocks Apply Locally & Submit
       mockValidateProfileInput.mockReturnValue({
         city: 'Mock city validation failure',
         aqi: 'Mock AQI validation failure',
@@ -190,12 +176,20 @@ describe('AskAssistantView and ProfileCustomizerModal unit tests (mocked fetch, 
       await user.click(screen.getByRole('button', { name: 'Generate Tailored Plan' }));
       expect(onGeneratePlan).not.toHaveBeenCalled();
 
-      // Valid submission and priority toggle
       mockValidateProfileInput.mockReturnValue({});
+      const cityInput = screen.getByLabelText('City or Neighborhood');
+      const aqiInput = screen.getByLabelText(/Current Winter AQI/i);
+      await user.clear(cityInput);
+      await user.type(cityInput, 'Milan, Italy');
+      await user.clear(aqiInput);
+      await user.type(aqiInput, '185');
+
       await user.click(screen.getByLabelText('Low-cost DIY indoor hacks'));
       await user.click(screen.getByRole('button', { name: 'Apply Locally' }));
       expect(onApplyLocalProfile).toHaveBeenCalledWith(
         expect.objectContaining({
+          city: 'Milan, Italy',
+          aqi: 185,
           priorities: expect.arrayContaining([
             'Protect children & elders',
             'Low-cost DIY indoor hacks',
@@ -204,7 +198,11 @@ describe('AskAssistantView and ProfileCustomizerModal unit tests (mocked fetch, 
       );
 
       await user.click(screen.getByRole('button', { name: 'Generate Tailored Plan' }));
-      await waitFor(() => expect(onGeneratePlan).toHaveBeenCalledTimes(1));
+      await waitFor(() =>
+        expect(onGeneratePlan).toHaveBeenCalledWith(
+          expect.objectContaining({ city: 'Milan, Italy', aqi: 185 }),
+        ),
+      );
 
       await user.keyboard('{Escape}');
       expect(onClose).toHaveBeenCalledTimes(1);

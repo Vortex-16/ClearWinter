@@ -24,7 +24,9 @@ export function ImpactStrip({ profile, impact }: ImpactStripProps) {
         <div className="p-4 sm:p-5 space-y-1.5 transition-colors duration-150 hover:bg-slate-50/70">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-slate-600">Ambient Winter Smog</span>
-            <span className={`inline-flex items-center gap-1 text-xs font-semibold ${band.textColorClass}`}>
+            <span
+              className={`inline-flex items-center gap-1 text-xs font-semibold ${band.textColorClass}`}
+            >
               <StatusIcon className="h-3.5 w-3.5" aria-hidden="true" />
               <span>{band.severity}</span>
             </span>
@@ -42,9 +44,7 @@ export function ImpactStrip({ profile, impact }: ImpactStripProps) {
         <div className="p-4 sm:p-5 space-y-2 transition-colors duration-150 hover:bg-slate-50/70">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-slate-600">Personal Exposure Cut</span>
-            <span className="font-mono text-xs tabular-nums text-slate-600">
-              max 82%
-            </span>
+            <span className="font-mono text-xs tabular-nums text-slate-600">max 82%</span>
           </div>
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <span
@@ -57,7 +57,10 @@ export function ImpactStrip({ profile, impact }: ImpactStripProps) {
               est. {impact.estimatedIndoorPm25} µg/m³ indoor
             </span>
           </div>
-          <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden" aria-hidden="true">
+          <div
+            className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden"
+            aria-hidden="true"
+          >
             <div
               style={{ width: `${progressPct}%` }}
               className="h-full rounded-full bg-teal-600 transition-[width] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
@@ -89,9 +92,7 @@ export function ImpactStrip({ profile, impact }: ImpactStripProps) {
             >
               {impact.weeklyPm25AvoidedGrams.toFixed(1)} g
             </span>
-            <span className="text-xs text-slate-600">
-              direct curb &amp; chimney cut
-            </span>
+            <span className="text-xs text-slate-600">direct curb &amp; chimney cut</span>
           </div>
         </div>
       </div>

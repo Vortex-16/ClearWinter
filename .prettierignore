@@ -1,0 +1,7 @@
+dist
+node_modules
+coverage
+.aistudio
+public/assets
+package-lock.json
+bun.lock

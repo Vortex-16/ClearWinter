@@ -40,14 +40,13 @@ export function DiurnalSmogChart({ aqi, bestVentilationWindow }: DiurnalSmogChar
             24-Hour Winter Thermal Inversion Curve
           </h2>
           <p className="text-xs text-slate-600 mt-0.5">
-            Select any hour bar (or use Left/Right arrow keys) to inspect particulate trapping and safe cross-ventilation timing.
+            Select any hour bar (or use Left/Right arrow keys) to inspect particulate trapping and
+            safe cross-ventilation timing.
           </p>
         </div>
         <div className="flex items-start sm:items-center gap-2 text-xs text-teal-800 min-w-0">
           <Clock className="h-3.5 w-3.5 text-teal-700 shrink-0 mt-0.5 sm:mt-0" aria-hidden="true" />
-          <span className="font-medium break-words">
-            Best Window: {bestVentilationWindow}
-          </span>
+          <span className="font-medium break-words">Best Window: {bestVentilationWindow}</span>
         </div>
       </div>
 
@@ -117,7 +116,9 @@ export function DiurnalSmogChart({ aqi, bestVentilationWindow }: DiurnalSmogChar
             {activePoint.pm25} µg/m³ (est. AQI {activePoint.aqi})
           </span>
           <span aria-hidden="true">·</span>
-          <span className={activePoint.ventilationSafe ? 'font-medium text-teal-800' : 'text-slate-700'}>
+          <span
+            className={activePoint.ventilationSafe ? 'font-medium text-teal-800' : 'text-slate-700'}
+          >
             {activePoint.phaseLabel}
           </span>
         </div>

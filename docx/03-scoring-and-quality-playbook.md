@@ -13,7 +13,7 @@ This checklist summarizes the practices built into ClearWinter so future updates
 - **DRY Shared Helpers**:
   - Reuse shared formulas (`getBaselineInfiltrationFactor`) and reusable UI primitives (`ProfileSelectField`) instead of copying logic.
 - **Documentation & Maintainability**:
-  - Write concise JSDoc comments on exported interfaces, hooks, and functions describing *contracts and invariants* (not obvious syntax), and explain *why* non-obvious math or edge-case guards exist.
+  - Write concise JSDoc comments on exported interfaces, hooks, and functions describing _contracts and invariants_ (not obvious syntax), and explain _why_ non-obvious math or edge-case guards exist.
 - **Resilience**:
   - Keep `<ErrorBoundary>` around the root tree in `src/main.tsx` so runtime render exceptions degrade cleanly with keyboard-accessible recovery.
 
@@ -57,14 +57,16 @@ This checklist summarizes the practices built into ClearWinter so future updates
 
 ## 5. Pre-Push Verification Checklist
 
-Before committing or deploying updates, always run all three checks locally:
+Before committing or deploying updates, always run all four checks locally:
 
 ```bash
-npm run lint     # Must finish with 0 TypeScript errors
-npm test         # All 23 test files / 91 tests (including axe-core audits) must pass
-npm run build    # Vite production bundle must compile cleanly
+npm run format:check # Must confirm all files match .prettierrc formatting
+npm run lint         # Must finish with 0 strict TypeScript & ESLint errors
+npm test             # All 15 test files / 56 tests (including axe-core audits) must pass
+npm run build        # Vite production bundle must compile cleanly
 ```
 
 If adding new components or utility functions:
-1. Add dependency-mocked unit tests in `src/tests/*.unit.test.ts(x)`.
+
+1. Use shared fixture builders in `src/test/factories.ts` and add dependency-mocked unit tests in `src/tests/*.unit.test.ts(x)`.
 2. Verify any new interactive views or dialogs against `axe-core` in `src/tests/accessibility.test.ts` or your unit test file.

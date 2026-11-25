@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import axe from 'axe-core';
 import { describe, expect, it, vi } from 'vitest';
 import { DiurnalSmogChart } from '../components/DiurnalSmogChart';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { runAxeAudit } from '../test/factories';
 
 function ThrowOnce({ shouldThrow }: { shouldThrow: boolean }) {
   if (shouldThrow) {
@@ -30,11 +30,7 @@ describe('ErrorBoundary and enhanced keyboard accessibility unit tests', () => {
 
     const alert = screen.getByRole('alert');
     expect(alert).toHaveTextContent('Something went wrong rendering ClearWinter');
-
-    const audit = await axe.run(container, {
-      rules: { 'color-contrast': { enabled: false } },
-    });
-    expect(audit.violations).toHaveLength(0);
+    await runAxeAudit(container);
 
     shouldThrow = false;
     await user.click(screen.getByRole('button', { name: 'Reload Workspace' }));
@@ -44,9 +40,7 @@ describe('ErrorBoundary and enhanced keyboard accessibility unit tests', () => {
   it('DiurnalSmogChart supports Left, Right, Home, and End keyboard navigation across hourly bars', async () => {
     const user = userEvent.setup();
 
-    render(
-      <DiurnalSmogChart aqi={210} bestVentilationWindow="1:30 PM – 3:30 PM" />,
-    );
+    render(<DiurnalSmogChart aqi={210} bestVentilationWindow="1:30 PM – 3:30 PM" />);
 
     const bar2Pm = screen.getByRole('button', { name: /^2 PM:/i });
     bar2Pm.focus();

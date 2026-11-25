@@ -38,11 +38,15 @@ function ProjectionTooltip({ active, payload }: ChartTooltipProps) {
       <div className="space-y-1 font-mono tabular-nums">
         <div className="flex items-center justify-between gap-4 text-slate-600">
           <span>Unmitigated baseline</span>
-          <span className="font-medium text-slate-900">{point.baselineCumulativeMg.toFixed(1)} mg</span>
+          <span className="font-medium text-slate-900">
+            {point.baselineCumulativeMg.toFixed(1)} mg
+          </span>
         </div>
         <div className="flex items-center justify-between gap-4 text-teal-800">
           <span>With adopted plan</span>
-          <span className="font-semibold text-teal-700">{point.projectedCumulativeMg.toFixed(1)} mg</span>
+          <span className="font-semibold text-teal-700">
+            {point.projectedCumulativeMg.toFixed(1)} mg
+          </span>
         </div>
         <div className="flex items-center justify-between gap-4 border-t border-slate-100 pt-1 text-emerald-700">
           <span>Cumulative spared</span>
@@ -73,7 +77,8 @@ export function ExposureProjectionChart({ profile, impact }: ExposureProjectionC
             </h2>
           </div>
           <p className="text-xs text-slate-600">
-            Cumulative inhaled PM2.5 dose per household member across a 12-week winter season based on your{' '}
+            Cumulative inhaled PM2.5 dose per household member across a 12-week winter season based
+            on your{' '}
             <span className="font-mono tabular-nums font-medium text-slate-800">
               {impact.adoptedCount}
             </span>{' '}
@@ -108,16 +113,14 @@ export function ExposureProjectionChart({ profile, impact }: ExposureProjectionC
 
       {impact.adoptedCount === 0 && (
         <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-          No habits are currently adopted. Adopt one or more routines, indoor hacks, or community swaps below to project your seasonal exposure reduction.
+          No habits are currently adopted. Adopt one or more routines, indoor hacks, or community
+          swaps below to project your seasonal exposure reduction.
         </p>
       )}
 
       <div className="h-52 w-full min-w-0">
         <ResponsiveContainer width="100%" height={208}>
-          <AreaChart
-            data={projection.points}
-            margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
-          >
+          <AreaChart data={projection.points} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
             <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="weekLabel"
@@ -166,7 +169,9 @@ export function ExposureProjectionChart({ profile, impact }: ExposureProjectionC
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span className="h-0.5 w-4 bg-teal-700 inline-block" aria-hidden="true" />
-            <span>Projected with adopted actions ({projection.totalProjectedMg.toFixed(1)} mg/season)</span>
+            <span>
+              Projected with adopted actions ({projection.totalProjectedMg.toFixed(1)} mg/season)
+            </span>
           </span>
         </div>
         <span className="font-mono tabular-nums">

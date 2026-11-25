@@ -1,49 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import App from './App';
-
-function mockStaticEndpoints(liveAqi = 312) {
-  return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
-    const url = String(input);
-    if (url === '/api/health') {
-      return new Response('<html>404</html>', {
-        status: 404,
-        headers: { 'content-type': 'text/html' },
-      });
-    }
-    if (url.startsWith('/api/aqi-live')) {
-      return new Response(
-        JSON.stringify({
-          reading: {
-            city: 'Delhi NCR, India',
-            aqi: liveAqi,
-            pm25: 315.4,
-            source: 'station-feed',
-            timestamp: '2026-11-19T13:00:00.000Z',
-          },
-        }),
-        { status: 200, headers: { 'content-type': 'application/json' } },
-      );
-    }
-    if (url.includes('geocoding-api.open-meteo.com')) {
-      return new Response(
-        JSON.stringify({ results: [{ latitude: 28.61, longitude: 77.21 }] }),
-        { status: 200, headers: { 'content-type': 'application/json' } },
-      );
-    }
-    if (url.includes('air-quality-api.open-meteo.com')) {
-      return new Response(
-        JSON.stringify({ current: { us_aqi: liveAqi, pm2_5: 315.4 } }),
-        { status: 200, headers: { 'content-type': 'application/json' } },
-      );
-    }
-    return new Response('<html>404</html>', {
-      status: 404,
-      headers: { 'content-type': 'text/html' },
-    });
-  });
-}
+import { mockStaticEndpoints } from './test/factories';
 
 describe('App integration flows', () => {
   it('switches regional presets, toggles habit adoption, and recalculates impact metrics', async () => {

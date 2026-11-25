@@ -1,9 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import {
-  SIDEBAR_COLLAPSED_STORAGE_KEY,
-  useSidebarState,
-} from './useSidebarState';
+import { SIDEBAR_COLLAPSED_STORAGE_KEY, useSidebarState } from './useSidebarState';
 
 describe('useSidebarState hook', () => {
   it('initializes from localStorage and persists collapsed toggles cleanly', () => {

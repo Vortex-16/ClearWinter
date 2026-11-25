@@ -19,11 +19,7 @@ export const SEVERITY_RANK: Record<AqiSeverity, number> = {
 
 /** Normalizes a city string to its lowercase primary locality segment for resilient comparisons. */
 export function normalizeCityName(city: string): string {
-  return city
-    .split(',')[0]
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, ' ');
+  return city.split(',')[0].trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
 /** Returns true when two city labels refer to the same locality (exact or prefix/substring overlap). */
